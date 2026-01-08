@@ -1,0 +1,174 @@
+{
+  "$schema": "C:/Users/Admin/.claude/templates/PRD.schema.json",
+  "project": "JUDGE",
+  "description": "Courtroom-themed AI app that analyzes conversations/disputes and delivers verdicts with shareable cards",
+  "tech_stack": ["React", "Vite", "TypeScript", "TailwindCSS", "Gemini API", "IndexedDB"],
+  "design": {
+    "background": "#000000",
+    "text": "#FFFFFF",
+    "accent_red": "#FF3B3B",
+    "accent_gold": "#D4A843",
+    "accent_purple": "#8B5CF6",
+    "vibe": "Law & Order meets Nuremberg - dark, weighty, dramatic"
+  },
+  "features": [
+    {
+      "id": 1,
+      "name": "Project scaffolding and base setup",
+      "description": "Initialize React + Vite + TypeScript + TailwindCSS with dark theme defaults",
+      "acceptance_criteria": [
+        "npm run dev starts server on localhost:5173",
+        "TailwindCSS configured with custom colors",
+        "Base layout with black background renders",
+        "TypeScript compiles without errors"
+      ],
+      "priority": 1,
+      "passes": false
+    },
+    {
+      "id": 2,
+      "name": "Home screen - ALL RISE",
+      "description": "Landing page with dramatic courtroom vibe, PRESENT YOUR CASE header, buttons for screenshot or text input",
+      "acceptance_criteria": [
+        "ALL RISE animation or dramatic entrance",
+        "PRESENT YOUR CASE header in gold",
+        "Two buttons: Upload Screenshots / Paste Text",
+        "Dark theme with proper typography",
+        "Responsive on mobile"
+      ],
+      "priority": 2,
+      "passes": false
+    },
+    {
+      "id": 3,
+      "name": "Evidence submission - Screenshots",
+      "description": "Upload up to 10 screenshots labeled as Exhibits A-J with drag-drop support",
+      "acceptance_criteria": [
+        "Drag-and-drop zone for images",
+        "Click to upload alternative",
+        "Preview grid showing uploads as Exhibit A, B, C...",
+        "Remove individual images",
+        "Max 10 images enforced",
+        "Images converted to base64 for API"
+      ],
+      "priority": 3,
+      "passes": false
+    },
+    {
+      "id": 4,
+      "name": "Evidence submission - Text input",
+      "description": "Text area for pasting conversation with party name fields and context box",
+      "acceptance_criteria": [
+        "Large text area for conversation paste",
+        "Fields for Party A name and Party B name",
+        "Additional context textarea",
+        "Character count display",
+        "Submit button enabled when valid"
+      ],
+      "priority": 4,
+      "passes": false
+    },
+    {
+      "id": 5,
+      "name": "Processing screen - Deliberation",
+      "description": "Dramatic loading screen while AI analyzes evidence",
+      "acceptance_criteria": [
+        "JUDGE IS DELIBERATING header",
+        "Animated gavel or scales of justice",
+        "Progress indication or loading spinner",
+        "Tense/dramatic visual treatment"
+      ],
+      "priority": 5,
+      "passes": false
+    },
+    {
+      "id": 6,
+      "name": "Gemini API integration",
+      "description": "Connect to Gemini API for OCR (screenshots) and verdict generation",
+      "acceptance_criteria": [
+        "API key stored securely in env",
+        "Vision API processes screenshots",
+        "Text API generates verdicts",
+        "Structured JSON response parsing",
+        "Error handling for API failures"
+      ],
+      "priority": 6,
+      "passes": false
+    },
+    {
+      "id": 7,
+      "name": "Verdict screen - Full analysis display",
+      "description": "Display winner, credibility scores, toxicity, manipulation tactics, red flags, evidence log, opinion, recommendations",
+      "acceptance_criteria": [
+        "Winner hero card at top with gold styling",
+        "Credibility percentage bars for each party",
+        "Toxicity meter (0-100%) with red gradient",
+        "Manipulation tactics list with icons",
+        "Red flags in Gen-Z terminology",
+        "Evidence log citing exhibits",
+        "Judge's opinion paragraph",
+        "Court recommendations section",
+        "Scrollable layout on mobile"
+      ],
+      "priority": 7,
+      "passes": false
+    },
+    {
+      "id": 8,
+      "name": "Share card generation",
+      "description": "Generate shareable verdict cards with theme options",
+      "acceptance_criteria": [
+        "Canvas or html2canvas generates image",
+        "Card shows verdict, winner, key stats",
+        "Theme selector: black, purple, gold, red",
+        "Download button saves PNG",
+        "Copy to clipboard option",
+        "Looks like official court document"
+      ],
+      "priority": 8,
+      "passes": false
+    },
+    {
+      "id": 9,
+      "name": "Case history with IndexedDB",
+      "description": "Save all cases locally for user to revisit",
+      "acceptance_criteria": [
+        "IndexedDB stores cases",
+        "History screen lists past verdicts",
+        "Click to view full verdict again",
+        "Delete individual cases",
+        "Timestamp on each case",
+        "Persists across browser sessions"
+      ],
+      "priority": 9,
+      "passes": false
+    },
+    {
+      "id": 10,
+      "name": "Settings screen",
+      "description": "Basic app settings",
+      "acceptance_criteria": [
+        "Clear all history option",
+        "About section",
+        "Theme preference (if applicable)",
+        "API key input (optional for self-hosted)"
+      ],
+      "priority": 10,
+      "passes": false
+    },
+    {
+      "id": 11,
+      "name": "Polish and visual refinement",
+      "description": "Final pass on animations, transitions, typography, and overall feel",
+      "acceptance_criteria": [
+        "Smooth page transitions",
+        "Hover states on interactive elements",
+        "Consistent typography scale",
+        "Mobile responsive throughout",
+        "No visual bugs or layout issues"
+      ],
+      "priority": 11,
+      "passes": false
+    }
+  ]
+}
