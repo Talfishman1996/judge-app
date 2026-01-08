@@ -52,12 +52,6 @@ export default function SettingsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <button
-          onClick={() => navigate('/')}
-          className="text-judge-white/60 hover:text-judge-white mb-4 text-sm tracking-wider"
-        >
-          &larr; BACK TO COURT
-        </button>
         <h1 className="text-judge-gold text-2xl sm:text-3xl font-bold tracking-widest">
           SETTINGS
         </h1>

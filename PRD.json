@@ -168,7 +168,7 @@
         "No visual bugs or layout issues"
       ],
       "priority": 11,
-      "passes": false
+      "passes": true
     }
   ]
 }
