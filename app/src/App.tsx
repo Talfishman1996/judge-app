@@ -1,38 +1,27 @@
-import './App.css'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import HomePage from './pages/HomePage'
+import UploadPage from './pages/UploadPage'
+import TextInputPage from './pages/TextInputPage'
+import DeliberationPage from './pages/DeliberationPage'
+import VerdictPage from './pages/VerdictPage'
+import SharePage from './pages/SharePage'
+import HistoryPage from './pages/HistoryPage'
+import SettingsPage from './pages/SettingsPage'
 
 function App() {
   return (
-    <div className="min-h-screen bg-judge-black flex flex-col items-center justify-center p-8">
-      {/* ALL RISE Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-judge-gold text-6xl font-bold tracking-ultrawide mb-4 text-shadow-glow">
-          ALL RISE
-        </h1>
-        <p className="text-judge-white/60 text-lg tracking-wider">
-          THE COURT IS NOW IN SESSION
-        </p>
-      </div>
-
-      {/* Main Header */}
-      <h2 className="text-judge-white text-3xl font-bold tracking-widest mb-12 text-center">
-        PRESENT YOUR CASE
-      </h2>
-
-      {/* Evidence Type Buttons */}
-      <div className="flex flex-col sm:flex-row gap-6 w-full max-w-lg">
-        <button className="flex-1 bg-transparent border-2 border-judge-gold text-judge-gold py-4 px-8 text-lg font-bold tracking-wider hover:bg-judge-gold hover:text-judge-black transition-all duration-300">
-          UPLOAD SCREENSHOTS
-        </button>
-        <button className="flex-1 bg-transparent border-2 border-judge-purple text-judge-purple py-4 px-8 text-lg font-bold tracking-wider hover:bg-judge-purple hover:text-judge-black transition-all duration-300">
-          PASTE TEXT
-        </button>
-      </div>
-
-      {/* Footer */}
-      <p className="text-judge-white/40 text-sm mt-16 tracking-wide">
-        Justice will be served
-      </p>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/upload" element={<UploadPage />} />
+        <Route path="/text" element={<TextInputPage />} />
+        <Route path="/deliberation" element={<DeliberationPage />} />
+        <Route path="/verdict" element={<VerdictPage />} />
+        <Route path="/share" element={<SharePage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 

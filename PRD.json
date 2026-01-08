@@ -23,7 +23,7 @@
         "TypeScript compiles without errors"
       ],
       "priority": 1,
-      "passes": false
+      "passes": true
     },
     {
       "id": 2,
@@ -37,7 +37,7 @@
         "Responsive on mobile"
       ],
       "priority": 2,
-      "passes": false
+      "passes": true
     },
     {
       "id": 3,
@@ -52,7 +52,7 @@
         "Images converted to base64 for API"
       ],
       "priority": 3,
-      "passes": false
+      "passes": true
     },
     {
       "id": 4,
@@ -66,7 +66,7 @@
         "Submit button enabled when valid"
       ],
       "priority": 4,
-      "passes": false
+      "passes": true
     },
     {
       "id": 5,
@@ -79,7 +79,7 @@
         "Tense/dramatic visual treatment"
       ],
       "priority": 5,
-      "passes": false
+      "passes": true
     },
     {
       "id": 6,
@@ -93,7 +93,7 @@
         "Error handling for API failures"
       ],
       "priority": 6,
-      "passes": false
+      "passes": true
     },
     {
       "id": 7,
@@ -111,7 +111,7 @@
         "Scrollable layout on mobile"
       ],
       "priority": 7,
-      "passes": false
+      "passes": true
     },
     {
       "id": 8,
@@ -126,7 +126,7 @@
         "Looks like official court document"
       ],
       "priority": 8,
-      "passes": false
+      "passes": true
     },
     {
       "id": 9,
@@ -141,7 +141,7 @@
         "Persists across browser sessions"
       ],
       "priority": 9,
-      "passes": false
+      "passes": true
     },
     {
       "id": 10,
@@ -154,7 +154,7 @@
         "API key input (optional for self-hosted)"
       ],
       "priority": 10,
-      "passes": false
+      "passes": true
     },
     {
       "id": 11,

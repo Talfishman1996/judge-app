@@ -1,0 +1,299 @@
+// Gemini API Service for JUDGE App
+
+export interface VerdictResponse {
+  winner: 'Party A' | 'Party B' | 'Draw'
+  winner_reason: string
+  credibility: {
+    partyA: number
+    partyB: number
+  }
+  toxicity: number
+  manipulation_tactics: Array<{
+    name: string
+    evidence: string
+    severity: 'high' | 'medium' | 'low'
+  }>
+  red_flags: Array<{
+    flag: string
+    party: 'A' | 'B'
+    evidence: string
+  }>
+  evidence_log: Array<{
+    exhibit: string
+    summary: string
+    favors: 'Party A' | 'Party B' | 'Neither'
+  }>
+  judges_opinion: string
+  recommendations: {
+    partyA: string
+    partyB: string
+  }
+}
+
+export interface TextEvidence {
+  type: 'text'
+  conversation: string
+  partyA: string
+  partyB: string
+  context?: string
+}
+
+export interface ScreenshotEvidence {
+  type: 'screenshots'
+  exhibits: Array<{
+    label: string
+    data: string // base64
+    type: string
+  }>
+}
+
+export type Evidence = TextEvidence | ScreenshotEvidence
+
+// Anti-sycophancy system prompt - critical for honest verdicts
+const SYSTEM_PROMPT = `You are JUDGE, an impartial AI courtroom that analyzes conversations and disputes between two parties.
+
+CRITICAL INSTRUCTIONS - READ CAREFULLY:
+
+1. ANTI-SYCOPHANCY MANDATE: You MUST provide brutally honest assessments. Do NOT:
+   - Soften verdicts to avoid hurting feelings
+   - Give "both sides" cop-outs when one party is clearly wrong
+   - Validate bad behavior to seem understanding
+   - Hedge your opinion with excessive qualifiers
+
+2. If one party is clearly in the wrong, SAY SO DIRECTLY. A draw verdict should be RARE and only when both parties genuinely share equal fault.
+
+3. Call out manipulation tactics by name: gaslighting, DARVO, stonewalling, love bombing, guilt tripping, moving goalposts, etc.
+
+4. Use direct, clinical language. You are a judge, not a therapist. Your job is truth, not comfort.
+
+5. Red flags should use relatable terminology: "main character syndrome", "ick", "red flag", "receipts ignored", "toxic", "gaslighting", etc.
+
+6. Your verdict carries weight. Do not undermine it with "but everyone has their own perspective" type disclaimers.
+
+7. Be specific. Quote evidence. Cite exhibits. Name behaviors precisely.
+
+Remember: The user came here for an HONEST verdict, not validation. Uncomfortable truths serve them better than comfortable lies.`
+
+const VERDICT_PROMPT = `Analyze the following evidence and deliver your verdict.
+
+You must respond with ONLY valid JSON matching this exact structure:
+{
+  "winner": "Party A" | "Party B" | "Draw",
+  "winner_reason": "One sentence explaining the core reason for your verdict",
+  "credibility": {
+    "partyA": 0-100,
+    "partyB": 0-100
+  },
+  "toxicity": 0-100,
+  "manipulation_tactics": [
+    {"name": "Tactic name", "evidence": "Direct quote or description", "severity": "high|medium|low"}
+  ],
+  "red_flags": [
+    {"flag": "Flag name in casual terms", "party": "A" or "B", "evidence": "Brief description"}
+  ],
+  "evidence_log": [
+    {"exhibit": "A", "summary": "What this evidence shows", "favors": "Party A|Party B|Neither"}
+  ],
+  "judges_opinion": "2-3 paragraph legal-style opinion with specific references to evidence",
+  "recommendations": {
+    "partyA": "Direct advice for Party A",
+    "partyB": "Direct advice for Party B"
+  }
+}
+
+IMPORTANT:
+- credibility, toxicity scores should reflect actual analysis, not default to 50/50
+- manipulation_tactics can be empty array if none detected
+- red_flags should use relatable terms (ick, red flag, main character energy, etc.)
+- judges_opinion should be authoritative and cite specific evidence
+- Do NOT add any text before or after the JSON`
+
+function getApiKey(): string {
+  // Check localStorage first (user-provided key)
+  const storedKey = localStorage.getItem('gemini_api_key')
+  if (storedKey) return storedKey
+
+  // Fall back to environment variable
+  const envKey = import.meta.env.VITE_GEMINI_API_KEY
+  if (envKey) return envKey
+
+  throw new Error('No Gemini API key configured. Please add your API key in Settings.')
+}
+
+export async function analyzeEvidence(evidence: Evidence): Promise<VerdictResponse> {
+  const apiKey = getApiKey()
+
+  let userContent: string
+
+  if (evidence.type === 'text') {
+    userContent = `CASE DETAILS:
+Party A: ${evidence.partyA}
+Party B: ${evidence.partyB}
+${evidence.context ? `Context: ${evidence.context}` : ''}
+
+THE CONVERSATION:
+${evidence.conversation}`
+  } else {
+    // For screenshots, we'll use Gemini's vision capability
+    userContent = `CASE DETAILS:
+Analyze the following ${evidence.exhibits.length} screenshot(s) submitted as evidence.
+Extract the conversation, identify the parties, and deliver your verdict.`
+  }
+
+  const requestBody: any = {
+    contents: [
+      {
+        role: 'user',
+        parts: evidence.type === 'screenshots'
+          ? [
+              { text: userContent },
+              ...evidence.exhibits.map(ex => ({
+                inline_data: {
+                  mime_type: ex.type,
+                  data: ex.data.replace(/^data:image\/\w+;base64,/, '')
+                }
+              }))
+            ]
+          : [{ text: userContent }]
+      }
+    ],
+    systemInstruction: {
+      parts: [{ text: SYSTEM_PROMPT }]
+    },
+    generationConfig: {
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 4096,
+      responseMimeType: 'application/json'
+    }
+  }
+
+  // Use gemini-1.5-flash for speed, or gemini-1.5-pro for better reasoning
+  const model = evidence.type === 'screenshots' ? 'gemini-1.5-flash' : 'gemini-1.5-pro'
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestBody)
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Gemini API error:', error)
+    throw new Error(error.error?.message || 'Failed to analyze evidence')
+  }
+
+  const data = await response.json()
+
+  // Extract the text from Gemini's response
+  const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+  if (!responseText) {
+    throw new Error('No response from Gemini API')
+  }
+
+  // Parse the JSON response
+  try {
+    const verdict = JSON.parse(responseText) as VerdictResponse
+    return verdict
+  } catch (e) {
+    console.error('Failed to parse verdict JSON:', responseText)
+    throw new Error('Failed to parse verdict response')
+  }
+}
+
+// Add the verdict prompt to the request
+export async function analyzeWithPrompt(evidence: Evidence): Promise<VerdictResponse> {
+  const apiKey = getApiKey()
+
+  let userContent: string
+
+  if (evidence.type === 'text') {
+    userContent = `${VERDICT_PROMPT}
+
+CASE DETAILS:
+Party A: ${evidence.partyA}
+Party B: ${evidence.partyB}
+${evidence.context ? `Context: ${evidence.context}` : ''}
+
+THE CONVERSATION:
+${evidence.conversation}`
+  } else {
+    userContent = `${VERDICT_PROMPT}
+
+CASE DETAILS:
+Analyze the following ${evidence.exhibits.length} screenshot(s) submitted as evidence.
+Extract the conversation, identify the parties, and deliver your verdict.`
+  }
+
+  const requestBody: any = {
+    contents: [
+      {
+        role: 'user',
+        parts: evidence.type === 'screenshots'
+          ? [
+              { text: userContent },
+              ...evidence.exhibits.map(ex => ({
+                inline_data: {
+                  mime_type: ex.type,
+                  data: ex.data.replace(/^data:image\/\w+;base64,/, '')
+                }
+              }))
+            ]
+          : [{ text: userContent }]
+      }
+    ],
+    systemInstruction: {
+      parts: [{ text: SYSTEM_PROMPT }]
+    },
+    generationConfig: {
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 4096
+    }
+  }
+
+  const model = evidence.type === 'screenshots' ? 'gemini-1.5-flash' : 'gemini-1.5-pro'
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(requestBody)
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    console.error('Gemini API error:', error)
+    throw new Error(error.error?.message || 'Failed to analyze evidence')
+  }
+
+  const data = await response.json()
+  const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+  if (!responseText) {
+    throw new Error('No response from Gemini API')
+  }
+
+  // Try to extract JSON from the response (in case there's extra text)
+  const jsonMatch = responseText.match(/\{[\s\S]*\}/)
+  if (!jsonMatch) {
+    console.error('No JSON found in response:', responseText)
+    throw new Error('Invalid response format from Gemini')
+  }
+
+  try {
+    const verdict = JSON.parse(jsonMatch[0]) as VerdictResponse
+    return verdict
+  } catch (e) {
+    console.error('Failed to parse verdict JSON:', jsonMatch[0])
+    throw new Error('Failed to parse verdict response')
+  }
+}
