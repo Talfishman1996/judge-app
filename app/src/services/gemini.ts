@@ -109,15 +109,8 @@ IMPORTANT:
 - Do NOT add any text before or after the JSON`
 
 function getApiKey(): string {
-  // Check localStorage first (user-provided key)
-  const storedKey = localStorage.getItem('gemini_api_key')
-  if (storedKey) return storedKey
-
-  // Fall back to environment variable
-  const envKey = import.meta.env.VITE_GEMINI_API_KEY
-  if (envKey) return envKey
-
-  throw new Error('No Gemini API key configured. Please add your API key in Settings.')
+  // Hardcoded API key - creator foots the bill
+  return 'AIzaSyAAFMVltRc4lu1uAfCcNG1ZLtefWC5noQU'
 }
 
 export async function analyzeEvidence(evidence: Evidence): Promise<VerdictResponse> {
@@ -169,8 +162,8 @@ Extract the conversation, identify the parties, and deliver your verdict.`
     }
   }
 
-  // Use gemini-1.5-flash for speed, or gemini-1.5-pro for better reasoning
-  const model = evidence.type === 'screenshots' ? 'gemini-1.5-flash' : 'gemini-1.5-pro'
+  // Use Gemini 3 Flash for fast, decisive, savage verdicts
+  const model = 'gemini-3-flash-preview'
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
 
   const response = await fetch(url, {
@@ -206,8 +199,60 @@ Extract the conversation, identify the parties, and deliver your verdict.`
   }
 }
 
+// Check if test mode is enabled
+function isTestMode(): boolean {
+  return localStorage.getItem('testMode') === 'true'
+}
+
+// Mock verdict for testing without API calls
+function getMockVerdict(evidence: Evidence): VerdictResponse {
+  const partyA = evidence.type === 'text' ? evidence.partyA : 'Person A'
+  const partyB = evidence.type === 'text' ? evidence.partyB : 'Person B'
+
+  // Randomize values for realistic testing
+  const partyACredibility = Math.floor(Math.random() * 40) + 60 // 60-99
+  const partyBCredibility = Math.floor(Math.random() * 40) + 10 // 10-49
+  const toxicity = Math.floor(Math.random() * 50) + 30 // 30-79
+
+  return {
+    winner: 'Party A',
+    winner_reason: `${partyA} demonstrated more emotional maturity and logical consistency throughout the exchange.`,
+    credibility: {
+      partyA: partyACredibility,
+      partyB: partyBCredibility
+    },
+    toxicity,
+    manipulation_tactics: [
+      { name: 'Gaslighting', evidence: 'You\'re overreacting', severity: 'high' },
+      { name: 'DARVO', evidence: 'Deflected blame back onto the other party', severity: 'medium' },
+      { name: 'Guilt-tripping', evidence: 'After everything I\'ve done', severity: 'medium' }
+    ],
+    red_flags: [
+      { flag: 'Main Character Syndrome', party: 'B', evidence: 'Made everything about themselves' },
+      { flag: 'Emotional Invalidation', party: 'B', evidence: 'Dismissed partner\'s concerns' },
+      { flag: 'Deflection', party: 'B', evidence: 'Changed subject when confronted' }
+    ],
+    evidence_log: [
+      { exhibit: 'A', summary: 'Initial complaint was reasonable and clearly stated', favors: 'Party A' },
+      { exhibit: 'B', summary: 'Response showed defensive behavior', favors: 'Party A' },
+      { exhibit: 'C', summary: 'Escalation came from the defendant', favors: 'Party A' }
+    ],
+    judges_opinion: `After careful review of the evidence, this court finds in favor of ${partyA}. The exchange clearly demonstrates a pattern of dismissive and manipulative behavior from ${partyB}. When ${partyA} expressed legitimate concerns, they were met with deflection, blame-shifting, and emotional invalidation. This is textbook DARVO behavior.\n\nThe evidence shows ${partyA} maintained composure and articulated their position clearly, while ${partyB} resorted to manipulation tactics rather than addressing the core issues.\n\n[TEST MODE - This is mock data for UI testing]`,
+    recommendations: {
+      partyA: 'Trust your instincts. Your feelings are valid and you communicated them well.',
+      partyB: 'Consider how your responses make others feel. Practice active listening instead of defending.'
+    }
+  }
+}
+
 // Add the verdict prompt to the request
 export async function analyzeWithPrompt(evidence: Evidence): Promise<VerdictResponse> {
+  // If test mode is enabled, return mock data without API call
+  if (isTestMode()) {
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 2000))
+    return getMockVerdict(evidence)
+  }
   const apiKey = getApiKey()
 
   let userContent: string
@@ -258,7 +303,8 @@ Extract the conversation, identify the parties, and deliver your verdict.`
     }
   }
 
-  const model = evidence.type === 'screenshots' ? 'gemini-1.5-flash' : 'gemini-1.5-pro'
+  // Use Gemini 3 Flash for fast, decisive, savage verdicts
+  const model = 'gemini-3-flash-preview'
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
 
   const response = await fetch(url, {

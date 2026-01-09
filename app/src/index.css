@@ -61,4 +61,103 @@ body {
   .animate-pulse-slow {
     animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  /* WINNER CARD - Hero edit, triumphant glow */
+  .card-winner {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.05) 100%);
+    border: 1px solid rgba(34, 197, 94, 0.4);
+    border-radius: 16px;
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* VILLAIN CARD - Fault party, ominous red */
+  .card-villain {
+    background: linear-gradient(135deg, rgba(255, 59, 59, 0.2) 0%, rgba(139, 0, 0, 0.15) 100%);
+    border: 1px solid rgba(255, 59, 59, 0.5);
+    border-radius: 16px;
+    box-shadow: 0 0 30px rgba(255, 59, 59, 0.1);
+  }
+
+  /* TOXIC DANGER - Pulsing alarm */
+  .card-toxic {
+    background: linear-gradient(135deg, rgba(255, 59, 59, 0.25) 0%, rgba(180, 0, 0, 0.2) 100%);
+    border: 2px solid rgba(255, 59, 59, 0.6);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(255, 59, 59, 0.2);
+    animation: pulse-danger 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-danger {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 59, 59, 0.2); }
+    50% { box-shadow: 0 0 35px rgba(255, 59, 59, 0.4); }
+  }
+
+  /* Dramatic section header */
+  .section-dramatic {
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
+  /* Dark card with subtle border */
+  .card-dark {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+  }
+
+  /* Red/danger gradient for high toxicity */
+  .card-danger {
+    background: linear-gradient(135deg, rgba(255, 59, 59, 0.15) 0%, rgba(255, 59, 59, 0.05) 100%);
+    border: 1px solid rgba(255, 59, 59, 0.3);
+    border-radius: 12px;
+  }
+
+  /* Gold/winner gradient */
+  .card-gold {
+    background: linear-gradient(135deg, rgba(212, 168, 67, 0.15) 0%, rgba(212, 168, 67, 0.05) 100%);
+    border: 1px solid rgba(212, 168, 67, 0.3);
+    border-radius: 16px;
+  }
+
+  /* Pill tag */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .pill-red {
+    background: rgba(255, 59, 59, 0.1);
+    border: 1px solid rgba(255, 59, 59, 0.4);
+    color: #FF3B3B;
+  }
+
+  .pill-gold {
+    background: rgba(212, 168, 67, 0.1);
+    border: 1px solid rgba(212, 168, 67, 0.4);
+    color: #D4A843;
+  }
+
+  /* Evidence quote styling - gold border like court documents */
+  .evidence-quote {
+    position: relative;
+    padding-left: 16px;
+    border-left: 3px solid #D4A843;
+  }
+
+  .evidence-quote::before {
+    content: '"';
+    position: absolute;
+    left: 16px;
+    top: -8px;
+    font-size: 32px;
+    color: rgba(212, 168, 67, 0.4);
+    font-family: Georgia, serif;
+  }
 }

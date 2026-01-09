@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JUDGE - Model Comparison</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Courier New', monospace;
+      min-height: 100vh;
+    }
+
+    .nav {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px;
+      background: #111;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 2px solid #dc2626;
+    }
+
+    .nav button {
+      background: transparent;
+      border: 2px solid #dc2626;
+      color: #dc2626;
+      padding: 10px 20px;
+      font-family: inherit;
+      font-weight: bold;
+      font-size: 12px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav button:hover, .nav button.active {
+      background: #dc2626;
+      color: #fff;
+    }
+
+    .model-label {
+      text-align: center;
+      padding: 15px;
+      background: linear-gradient(90deg, transparent, #dc262640, transparent);
+      font-size: 14px;
+      letter-spacing: 4px;
+      color: #f59e0b;
+    }
+
+    .verdict-page {
+      display: none;
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      background: #000;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .verdict-page.active { display: block; }
+
+    /* Scan lines */
+    .scanlines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 30;
+      opacity: 0.15;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent 0px,
+        transparent 2px,
+        rgba(0,0,0,0.3) 2px,
+        rgba(0,0,0,0.3) 4px
+      );
+    }
+
+    /* Red vignette */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+      background: radial-gradient(ellipse at center, transparent 40%, rgba(127,29,29,0.25) 100%);
+    }
+
+    .header {
+      position: relative;
+      z-index: 10;
+      padding: 50px 16px 24px;
+    }
+
+    .timestamp {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .timestamp .rec {
+      color: #dc2626;
+    }
+
+    .evidence-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #dc2626;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 8px;
+      letter-spacing: 2px;
+    }
+
+    .status-badge {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .status-badge span {
+      padding: 8px 32px;
+      border: 4px solid #dc2626;
+      background: rgba(0,0,0,0.7);
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 4px;
+      color: #dc2626;
+      transform: rotate(-12deg);
+      text-shadow: 0 0 10px rgba(220,38,38,0.5);
+    }
+
+    .loser-name {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .loser-name h1 {
+      font-family: Impact, sans-serif;
+      font-size: 48px;
+      text-transform: uppercase;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.8);
+    }
+
+    .loser-name .subject-id {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 3px;
+    }
+
+    .wrong-percent {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .wrong-percent .label {
+      font-size: 10px;
+      color: rgba(220,38,38,0.6);
+      letter-spacing: 4px;
+      margin-bottom: 4px;
+    }
+
+    .wrong-percent .number {
+      font-size: 96px;
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(180deg, #dc2626 0%, #7f1d1d 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 20px rgba(220,38,38,0.5));
+    }
+
+    .meme-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    .meme-frame {
+      position: relative;
+      width: 176px;
+      height: 192px;
+      background: rgba(127,29,29,0.3);
+      filter: grayscale(30%) contrast(1.1);
+    }
+
+    .meme-frame::before,
+    .meme-frame::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-color: rgba(220,38,38,0.6);
+      border-style: solid;
+    }
+
+    .meme-frame::before {
+      top: -4px;
+      left: -4px;
+      border-width: 2px 0 0 2px;
+    }
+
+    .meme-frame::after {
+      bottom: -4px;
+      right: -4px;
+      border-width: 0 2px 2px 0;
+    }
+
+    .meme-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+    }
+
+    .meme-frame .exhibit-label {
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #dc2626;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 900;
+      padding: 2px 12px;
+    }
+
+    .section-header {
+      font-size: 10px;
+      letter-spacing: 3px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-header.red { color: #dc2626; }
+    .section-header.amber { color: #f59e0b; }
+    .section-header.blue { color: #3b82f6; }
+    .section-header.yellow { color: #eab308; }
+    .section-header.purple { color: #a855f7; }
+    .section-header.green { color: #22c55e; }
+
+    .violations {
+      padding: 0 16px;
+      margin-bottom: 16px;
+    }
+
+    .violation-item {
+      background: rgba(127,29,29,0.2);
+      border-left: 2px solid rgba(220,38,38,0.7);
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+
+    .violation-item .name {
+      font-size: 14px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .violation-item .name .num {
+      color: rgba(220,38,38,0.7);
+    }
+
+    .violation-item .evidence {
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      margin-top: 4px;
+    }
+
+    .tactics {
+      padding: 0 16px;
+      margin-bottom: 16px;
+    }
+
+    .tactics-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tactic-badge {
+      padding: 4px 12px;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .tactic-badge.high {
+      background: rgba(127,29,29,0.5);
+      color: #fca5a5;
+      border: 1px solid rgba(220,38,38,0.5);
+    }
+
+    .tactic-badge.medium {
+      background: rgba(120,53,15,0.3);
+      color: #fcd34d;
+      border: 1px solid rgba(245,158,11,0.3);
+    }
+
+    .divider {
+      position: relative;
+      height: 24px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+
+    .divider-bg {
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(90deg, #dc2626 0px, #dc2626 20px, #000 20px, #000 40px);
+    }
+
+    .divider-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .divider-text span {
+      background: #000;
+      padding: 0 16px;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: #f59e0b;
+    }
+
+    .winner-section {
+      padding: 16px;
+      background: linear-gradient(180deg, #000 0%, rgba(22,101,52,0.1) 100%);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .winner-section .cleared {
+      font-size: 10px;
+      color: rgba(34,197,94,0.6);
+      letter-spacing: 4px;
+      margin-bottom: 4px;
+    }
+
+    .winner-section h2 {
+      font-size: 20px;
+      font-weight: 900;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .winner-section .cred {
+      text-align: right;
+    }
+
+    .winner-section .cred-num {
+      font-size: 24px;
+      font-weight: 900;
+      color: #22c55e;
+    }
+
+    .winner-section .cred-label {
+      font-size: 10px;
+      color: rgba(34,197,94,0.4);
+    }
+
+    .analysis {
+      padding: 16px;
+    }
+
+    .toxicity-section {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .toxicity-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .toxicity-header .label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.5);
+      letter-spacing: 3px;
+    }
+
+    .toxicity-header .value {
+      font-size: 18px;
+      font-weight: 900;
+      color: #dc2626;
+    }
+
+    .toxicity-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      overflow: hidden;
+    }
+
+    .toxicity-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f59e0b, #ef4444, #dc2626);
+    }
+
+    .evidence-log {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .evidence-item {
+      background: rgba(255,255,255,0.05);
+      border-left: 2px solid rgba(59,130,246,0.5);
+      padding: 8px 12px;
+      margin-bottom: 8px;
+    }
+
+    .evidence-item .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+    }
+
+    .evidence-item .exhibit {
+      color: #3b82f6;
+      font-weight: bold;
+    }
+
+    .evidence-item .favors {
+      color: #22c55e;
+    }
+
+    .evidence-item .favors.b {
+      color: #dc2626;
+    }
+
+    .evidence-item .summary {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 4px;
+    }
+
+    .ruling {
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .ruling p {
+      font-size: 13px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .recommendations {
+      padding: 16px 0 100px;
+    }
+
+    .rec-item {
+      padding: 8px 12px;
+      margin-bottom: 12px;
+    }
+
+    .rec-item.loser {
+      background: rgba(127,29,29,0.2);
+      border-left: 2px solid #dc2626;
+    }
+
+    .rec-item.winner {
+      background: rgba(22,101,52,0.2);
+      border-left: 2px solid #22c55e;
+    }
+
+    .rec-item .for {
+      font-size: 10px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .rec-item.loser .for { color: #f87171; }
+    .rec-item.winner .for { color: #4ade80; }
+
+    .rec-item .text {
+      font-size: 13px;
+      color: rgba(255,255,255,0.5);
+    }
+
+    .speed-badge {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #111;
+      border: 1px solid #333;
+      padding: 8px 16px;
+      font-size: 11px;
+      z-index: 100;
+    }
+
+    .speed-badge .fast { color: #22c55e; }
+    .speed-badge .medium { color: #f59e0b; }
+    .speed-badge .slow { color: #dc2626; }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <button class="active" onclick="showModel('pro')">3 PRO PREVIEW</button>
+    <button onclick="showModel('flash')">3 FLASH PREVIEW</button>
+    <button onclick="showModel('25pro')">2.5 PRO</button>
+  </nav>
+
+  <!-- GEMINI 3 PRO PREVIEW -->
+  <div id="pro" class="verdict-page active">
+    <div class="model-label">GEMINI 3 PRO PREVIEW</div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="header">
+      <div class="timestamp">
+        <div class="rec">REC ●</div>
+        <div>01/09/2026, 20:45:58</div>
+        <div>CASE #847291</div>
+      </div>
+      <div class="evidence-badge">EVIDENCE</div>
+
+      <div class="status-badge">
+        <span>GUILTY</span>
+      </div>
+
+      <div class="loser-name">
+        <h1>MIKE</h1>
+        <div class="subject-id">SUBJECT ID: MIKE-847291</div>
+      </div>
+
+      <div class="wrong-percent">
+        <div class="label">% WRONG</div>
+        <div class="number">90%</div>
+      </div>
+
+      <div class="meme-container">
+        <div class="meme-frame">
+          <img src="https://i.kym-cdn.com/entries/icons/original/000/016/546/hidethepainharold.jpg" alt="Hide the Pain Harold">
+          <div class="exhibit-label">EXHIBIT A</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="violations">
+      <div class="section-header red">▶ VIOLATIONS DOCUMENTED</div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[01]</span> Weaponizing Insecurities</div>
+        <div class="evidence">"You're acting like your mom right now."</div>
+      </div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[02]</span> Bros over Hoes (Immature Prioritization)</div>
+        <div class="evidence">Refusing to leave a game for a partner's birthday because friends might mock him.</div>
+      </div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[03]</span> Complete Lack of Accountability</div>
+        <div class="evidence">Shifted from 'I forgot' to 'You are too dramatic' within seconds.</div>
+      </div>
+    </div>
+
+    <div class="tactics">
+      <div class="section-header amber">▶ TACTICS IDENTIFIED</div>
+      <div class="tactics-list">
+        <span class="tactic-badge high">MINIMIZATION</span>
+        <span class="tactic-badge high">DARVO</span>
+        <span class="tactic-badge high">GASLIGHTING</span>
+        <span class="tactic-badge medium">TRIANGULATION</span>
+      </div>
+    </div>
+
+    <div class="divider">
+      <div class="divider-bg"></div>
+      <div class="divider-text"><span>CASE CLOSED</span></div>
+    </div>
+
+    <div class="winner-section">
+      <div>
+        <div class="cleared">✓ CLEARED</div>
+        <h2>SARAH</h2>
+      </div>
+      <div class="cred">
+        <div class="cred-num">95%</div>
+        <div class="cred-label">CREDIBILITY</div>
+      </div>
+    </div>
+
+    <div class="analysis">
+      <div class="toxicity-section">
+        <div class="toxicity-header">
+          <span class="label">TOXICITY INDEX</span>
+          <span class="value">90%</span>
+        </div>
+        <div class="toxicity-bar">
+          <div class="toxicity-fill" style="width: 90%"></div>
+        </div>
+      </div>
+
+      <div class="ruling">
+        <div class="section-header yellow">▶ COURT RULING</div>
+        <p>The court finds unequivocally in favor of Party A (Sarah). Party B (Mike) exhibits textbook toxic behavior patterns. The dispute began with a clear breach of commitment: Mike forgot a significant life event (birthday with family present) to watch a sports game. While forgetting is a human error, his subsequent reaction transforms this from a mistake into emotional abuse.</p>
+        <br>
+        <p>Mike immediately engaged in Minimization ("It's just dinner") followed by DARVO. He attempted to make Sarah the aggressor for having a reasonable emotional reaction to his negligence. Most damning is the contradiction in his testimony: he initially admitted he 'forgot,' but when pressed, he changed his narrative to claim he 'didn't want to come' because of her potential reaction.</p>
+      </div>
+
+      <div class="recommendations">
+        <div class="section-header purple">▶ COURT ORDERS</div>
+        <div class="rec-item loser">
+          <div class="for">FOR MIKE:</div>
+          <div class="text">You need to learn the definition of accountability. Saying 'sorry' followed by 'but you are dramatic' is not an apology; it is a manipulation. Stop blaming your partner for your own forgetfulness and lack of respect.</div>
+        </div>
+        <div class="rec-item winner">
+          <div class="for">FOR SARAH:</div>
+          <div class="text">This is not about a dinner; it is about where you rank in his priorities (below 'the guys' and a game). His reaction to hurting you was to attack your character. Proceed with extreme caution or exit the relationship.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="speed-badge">Response: <span class="slow">22.67s</span></div>
+  </div>
+
+  <!-- GEMINI 3 FLASH PREVIEW -->
+  <div id="flash" class="verdict-page">
+    <div class="model-label">GEMINI 3 FLASH PREVIEW</div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="header">
+      <div class="timestamp">
+        <div class="rec">REC ●</div>
+        <div>01/09/2026, 20:46:08</div>
+        <div>CASE #847292</div>
+      </div>
+      <div class="evidence-badge">EVIDENCE</div>
+
+      <div class="status-badge">
+        <span>BUSTED</span>
+      </div>
+
+      <div class="loser-name">
+        <h1>MIKE</h1>
+        <div class="subject-id">SUBJECT ID: MIKE-847292</div>
+      </div>
+
+      <div class="wrong-percent">
+        <div class="label">% WRONG</div>
+        <div class="number">80%</div>
+      </div>
+
+      <div class="meme-container">
+        <div class="meme-frame">
+          <img src="https://i.kym-cdn.com/entries/icons/original/000/000/554/picard-facepalm.jpg" alt="Picard Facepalm">
+          <div class="exhibit-label">EXHIBIT A</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="violations">
+      <div class="section-header red">▶ VIOLATIONS DOCUMENTED</div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[01]</span> Main Character Syndrome</div>
+        <div class="evidence">Mike believes his desire to watch a game and avoid 'shit' from his friends outweighs a prior commitment to his partner's birthday.</div>
+      </div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[02]</span> Weaponized Incompetence</div>
+        <div class="evidence">Claiming he 'forgot' a dinner he was reminded of that same morning.</div>
+      </div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[03]</span> The Ick</div>
+        <div class="evidence">Prioritizing 'the guys' and a game over a significant milestone for his partner.</div>
+      </div>
+    </div>
+
+    <div class="tactics">
+      <div class="section-header amber">▶ TACTICS IDENTIFIED</div>
+      <div class="tactics-list">
+        <span class="tactic-badge high">GASLIGHTING</span>
+        <span class="tactic-badge high">DARVO</span>
+        <span class="tactic-badge high">DEFLECTION</span>
+        <span class="tactic-badge medium">MINIMIZATION</span>
+      </div>
+    </div>
+
+    <div class="divider">
+      <div class="divider-bg"></div>
+      <div class="divider-text"><span>CASE CLOSED</span></div>
+    </div>
+
+    <div class="winner-section">
+      <div>
+        <div class="cleared">✓ CLEARED</div>
+        <h2>SARAH</h2>
+      </div>
+      <div class="cred">
+        <div class="cred-num">100%</div>
+        <div class="cred-label">CREDIBILITY</div>
+      </div>
+    </div>
+
+    <div class="analysis">
+      <div class="toxicity-section">
+        <div class="toxicity-header">
+          <span class="label">TOXICITY INDEX</span>
+          <span class="value">85%</span>
+        </div>
+        <div class="toxicity-bar">
+          <div class="toxicity-fill" style="width: 85%"></div>
+        </div>
+      </div>
+
+      <div class="ruling">
+        <div class="section-header yellow">▶ COURT RULING</div>
+        <p>The court finds in favor of Sarah. Mike's defense is a textbook display of toxic deflection. He initially claims he 'forgot' the dinner, despite a morning reminder, which suggests a deliberate choice to prioritize his social life over his partner. When confronted, he immediately pivots to gaslighting, attempting to frame Sarah's reasonable expectation of his presence as 'dramatic' and 'blown out of proportion.'</p>
+        <br>
+        <p>Furthermore, Mike's credibility is non-existent. He contradicts himself within minutes, moving from an 'oops, I forgot' excuse to admitting he 'didn't want to come' because he anticipated drama. His use of a personal insult—comparing Sarah to her mother—is a low-effort attempt to silence her. Mike is not a partner; he is a liability who views basic relationship obligations as 'drama.'</p>
+      </div>
+
+      <div class="recommendations">
+        <div class="section-header purple">▶ COURT ORDERS</div>
+        <div class="rec-item loser">
+          <div class="for">FOR MIKE:</div>
+          <div class="text">Stop using gaslighting as a shield for your own laziness. If you value a game over your partner's birthday, stay single so no one has to rely on you.</div>
+        </div>
+        <div class="rec-item winner">
+          <div class="for">FOR SARAH:</div>
+          <div class="text">Recognize that this is not about 'just dinner'; it is about a fundamental lack of respect. Do not accept the 'make it up to you' carrot; his behavior during the argument is the real Mike. Reevaluate the relationship.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="speed-badge">Response: <span class="fast">9.76s</span> ⚡</div>
+  </div>
+
+  <!-- GEMINI 2.5 PRO -->
+  <div id="25pro" class="verdict-page">
+    <div class="model-label">GEMINI 2.5 PRO</div>
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="header">
+      <div class="timestamp">
+        <div class="rec">REC ●</div>
+        <div>01/09/2026, 20:46:35</div>
+        <div>CASE #847293</div>
+      </div>
+      <div class="evidence-badge">EVIDENCE</div>
+
+      <div class="status-badge">
+        <span>CLOWN</span>
+      </div>
+
+      <div class="loser-name">
+        <h1>MIKE</h1>
+        <div class="subject-id">SUBJECT ID: MIKE-847293</div>
+      </div>
+
+      <div class="wrong-percent">
+        <div class="label">% WRONG</div>
+        <div class="number">95%</div>
+      </div>
+
+      <div class="meme-container">
+        <div class="meme-frame">
+          <img src="https://i.kym-cdn.com/entries/icons/original/000/032/858/cover1.jpg" alt="Joker">
+          <div class="exhibit-label">EXHIBIT A</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="violations">
+      <div class="section-header red">▶ VIOLATIONS DOCUMENTED</div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[01]</span> The Non-Apology</div>
+        <div class="evidence">"Oh shit, yeah sorry I forgot" and "I said I was sorry, what more do you want?"</div>
+      </div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[02]</span> Main Character Syndrome</div>
+        <div class="evidence">Mike prioritizes watching a game and avoiding teasing from friends over his partner's birthday dinner with her family.</div>
+      </div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[03]</span> Receipts Ignored</div>
+        <div class="evidence">Sarah states she reminded him that morning, a fact Mike completely ignores.</div>
+      </div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[04]</span> Gaslighting 101</div>
+        <div class="evidence">Mike frames Sarah's valid emotional reaction as her 'making drama out of nothing.'</div>
+      </div>
+      <div class="violation-item">
+        <div class="name"><span class="num">[05]</span> Toxic Deflection</div>
+        <div class="evidence">When losing the argument on facts, Mike resorts to: "You're acting like your mom right now."</div>
+      </div>
+    </div>
+
+    <div class="tactics">
+      <div class="section-header amber">▶ TACTICS IDENTIFIED</div>
+      <div class="tactics-list">
+        <span class="tactic-badge high">GASLIGHTING</span>
+        <span class="tactic-badge high">DARVO</span>
+        <span class="tactic-badge high">BLAME-SHIFTING</span>
+        <span class="tactic-badge medium">MINIMIZATION</span>
+      </div>
+    </div>
+
+    <div class="divider">
+      <div class="divider-bg"></div>
+      <div class="divider-text"><span>CASE CLOSED</span></div>
+    </div>
+
+    <div class="winner-section">
+      <div>
+        <div class="cleared">✓ CLEARED</div>
+        <h2>SARAH</h2>
+      </div>
+      <div class="cred">
+        <div class="cred-num">95%</div>
+        <div class="cred-label">CREDIBILITY</div>
+      </div>
+    </div>
+
+    <div class="analysis">
+      <div class="toxicity-section">
+        <div class="toxicity-header">
+          <span class="label">TOXICITY INDEX</span>
+          <span class="value">85%</span>
+        </div>
+        <div class="toxicity-bar">
+          <div class="toxicity-fill" style="width: 85%"></div>
+        </div>
+      </div>
+
+      <div class="ruling">
+        <div class="section-header yellow">▶ COURT RULING</div>
+        <p>This case is not a matter of miscommunication; it is a clear-cut case of negligence followed by a masterclass in manipulation. Party B (Mike) is unequivocally at fault. The initial offense—forgetting his partner's birthday dinner after being reminded that same day—is significant in itself. It demonstrates a profound lack of consideration.</p>
+        <br>
+        <p>However, Mike's response to being held accountable is far more damning. Rather than offering a sincere apology and attempting to rectify the situation, he launched a textbook DARVO campaign. He denied the significance of the event, attacked Sarah for her valid emotional response, and reversed the roles to paint himself as the victim of her 'drama.' The verdict is not a close call. Party B's behavior was disrespectful, toxic, and indefensible.</p>
+      </div>
+
+      <div class="recommendations">
+        <div class="section-header purple">▶ COURT ORDERS</div>
+        <div class="rec-item loser">
+          <div class="for">FOR MIKE:</div>
+          <div class="text">You are entirely in the wrong. Your failure to show up was compounded by cruel and manipulative behavior. You owe Party A an unconditional apology, not for her reaction, but for your actions. You must learn to accept responsibility without resorting to attacking your partner's character.</div>
+        </div>
+        <div class="rec-item winner">
+          <div class="for">FOR SARAH:</div>
+          <div class="text">Recognize that his response to being held accountable is more revealing than his initial mistake. This pattern of gaslighting and blame-shifting is a significant red flag. Do not accept the blame he is attempting to place on you.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="speed-badge">Response: <span class="slow">26.74s</span></div>
+  </div>
+
+  <script>
+    function showModel(id) {
+      document.querySelectorAll('.verdict-page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

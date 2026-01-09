@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verdict Comparison</title>
+  <style>
+    body {
+      background: #1a1a1a;
+      margin: 0;
+      padding: 20px;
+      font-family: system-ui;
+    }
+    h1 { color: white; text-align: center; }
+    .container {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .frame {
+      text-align: center;
+    }
+    .frame h2 { color: white; margin-bottom: 10px; }
+    iframe {
+      width: 390px;
+      height: 844px;
+      border: 3px solid #333;
+      border-radius: 40px;
+      background: black;
+    }
+  </style>
+</head>
+<body>
+  <h1>iPhone Comparison</h1>
+  <div class="container">
+    <div class="frame">
+      <h2>ORIGINAL (Scroll)</h2>
+      <iframe src="http://localhost:5173/verdict"></iframe>
+    </div>
+    <div class="frame">
+      <h2>SUMMARY</h2>
+      <iframe src="http://localhost:5173/verdict/summary"></iframe>
+    </div>
+  </div>
+  <script>
+    // Inject mock data into iframes when they load
+    const mockVerdict = {
+      winner: "Party A",
+      winner_reason: "Analysis indicates logical consistency and emotional stability in Sophia's statements.",
+      credibility: { partyA: 92, partyB: 34 },
+      toxicity: 65,
+      manipulation_tactics: [
+        { name: "Gaslighting", evidence: "ur fine just sleep", severity: "high" },
+        { name: "Guilt-tripping", evidence: "after everything I did for you", severity: "medium" }
+      ],
+      red_flags: [
+        { flag: "Invalidating Feelings", party: "B", evidence: "dismissed concerns" },
+        { flag: "Guilt-tripping", party: "B", evidence: "used past favors" },
+        { flag: "Deflection", party: "B", evidence: "changed subject" }
+      ],
+      evidence_log: [
+        { exhibit: "01", summary: "Subject dismissed partner's emotional state.", favors: "Party A" },
+        { exhibit: "02", summary: "Escalation tactic observed.", favors: "Party A" },
+        { exhibit: "03", summary: "Financial manipulation detected.", favors: "Party A" }
+      ],
+      judges_opinion: "The court finds overwhelming evidence of emotional manipulation by the Boyfriend.",
+      recommendations: {
+        partyA: "Trust your instincts. Your feelings are valid.",
+        partyB: "Seek to understand before seeking to be understood."
+      }
+    };
+    const mockEvidence = { partyA: "Sophia", partyB: "Boyfriend" };
+
+    // Set in main window localStorage (iframes will read from it)
+    localStorage.setItem('verdict', JSON.stringify(mockVerdict));
+    localStorage.setItem('evidence', JSON.stringify(mockEvidence));
+  </script>
+</body>
+</html>

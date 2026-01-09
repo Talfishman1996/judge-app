@@ -14,27 +14,33 @@ interface Verdict {
   judges_opinion: string
 }
 
-type Theme = 'black' | 'gold' | 'purple' | 'red'
-
-const themes: Record<Theme, { bg: string; accent: string; text: string }> = {
-  black: { bg: '#000000', accent: '#D4A843', text: '#FFFFFF' },
-  gold: { bg: '#1a1500', accent: '#D4A843', text: '#FFFFFF' },
-  purple: { bg: '#1a0a2e', accent: '#8B5CF6', text: '#FFFFFF' },
-  red: { bg: '#1a0505', accent: '#FF3B3B', text: '#FFFFFF' }
-}
-
 export default function SharePage() {
   const navigate = useNavigate()
   const cardRef = useRef<HTMLDivElement>(null)
   const [verdict, setVerdict] = useState<Verdict | null>(null)
-  const [theme, setTheme] = useState<Theme>('black')
   const [isGenerating, setIsGenerating] = useState(false)
   const [partyAName, setPartyAName] = useState('Party A')
   const [partyBName, setPartyBName] = useState('Party B')
+  const [timestamp, setTimestamp] = useState('')
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
-    const verdictData = sessionStorage.getItem('verdict')
-    const evidenceData = sessionStorage.getItem('evidence')
+    const updateTime = () => {
+      setTimestamp(new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }))
+    }
+    updateTime()
+    const interval = setInterval(updateTime, 1000)
+
+    const verdictData = sessionStorage.getItem('verdict') || localStorage.getItem('verdict')
+    const evidenceData = sessionStorage.getItem('evidence') || localStorage.getItem('evidence')
 
     if (!verdictData) {
       navigate('/')
@@ -48,6 +54,8 @@ export default function SharePage() {
       if (evidence.partyA) setPartyAName(evidence.partyA)
       if (evidence.partyB) setPartyBName(evidence.partyB)
     }
+
+    return () => clearInterval(interval)
   }, [navigate])
 
   const downloadCard = async () => {
@@ -58,7 +66,7 @@ export default function SharePage() {
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
-        backgroundColor: themes[theme].bg
+        backgroundColor: '#000000'
       })
 
       const link = document.createElement('a')
@@ -80,7 +88,7 @@ export default function SharePage() {
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
-        backgroundColor: themes[theme].bg
+        backgroundColor: '#000000'
       })
 
       const response = await fetch(dataUrl)
@@ -90,7 +98,8 @@ export default function SharePage() {
         new ClipboardItem({ 'image/png': blob })
       ])
 
-      alert('Verdict card copied to clipboard!')
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
     } catch (err) {
       console.error('Failed to copy:', err)
       alert('Failed to copy. Try downloading instead.')
@@ -112,7 +121,7 @@ export default function SharePage() {
       const dataUrl = await toPng(cardRef.current, {
         quality: 1,
         pixelRatio: 2,
-        backgroundColor: themes[theme].bg
+        backgroundColor: '#000000'
       })
 
       const response = await fetch(dataUrl)
@@ -135,198 +144,244 @@ export default function SharePage() {
 
   if (!verdict) return null
 
-  const currentTheme = themes[theme]
   const winnerName = verdict.winner === 'Party A' ? partyAName :
                      verdict.winner === 'Party B' ? partyBName : 'DRAW'
+  const loserName = verdict.winner === 'Party A' ? partyBName :
+                    verdict.winner === 'Party B' ? partyAName : null
 
   return (
-    <div className="min-h-screen bg-judge-black p-4 sm:p-8">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-black flex flex-col relative overflow-hidden">
+      {/* Scan lines overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none z-30 opacity-20"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            0deg,
+            transparent 0px,
+            transparent 2px,
+            rgba(0,0,0,0.3) 2px,
+            rgba(0,0,0,0.3) 4px
+          )`,
+        }}
+      />
+
+      {/* Red vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none z-20"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(127,29,29,0.15) 100%)',
+        }}
+      />
+
+      {/* Corner timestamp */}
+      <div className="absolute top-3 left-3 z-40 font-mono text-[10px] text-white/50">
+        <div className="text-red-500 flex items-center gap-1">
+          <span className="animate-pulse">●</span> EXPORT
+        </div>
+        <div>{timestamp}</div>
+        <div>SHARE MODE</div>
+      </div>
+
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/verdict/brutalist')}
+        className="absolute top-3 right-3 z-40 text-white/30 hover:text-white text-[10px] font-mono tracking-wider transition-colors"
+      >
+        [BACK]
+      </button>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-16 relative z-10">
         {/* Header */}
         <motion.div
-          className="text-center mb-8"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ scale: 0, rotate: -30 }}
+          animate={{ scale: 1, rotate: -6 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+          className="mb-6"
         >
-          <button
-            onClick={() => navigate('/verdict')}
-            className="text-judge-white/60 hover:text-judge-white mb-4 text-sm tracking-wider"
+          <div
+            className="px-6 py-2 border-2 border-amber-500"
+            style={{ background: 'rgba(0,0,0,0.8)' }}
           >
-            &larr; BACK TO VERDICT
-          </button>
-          <h1 className="text-judge-gold text-2xl sm:text-3xl font-bold tracking-widest">
-            SHARE VERDICT
-          </h1>
-        </motion.div>
-
-        {/* Theme Selector */}
-        <motion.div
-          className="flex justify-center gap-4 mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          {(Object.keys(themes) as Theme[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTheme(t)}
-              className={`w-10 h-10 rounded-full border-2 transition-all ${
-                theme === t ? 'scale-110 border-white' : 'border-transparent'
-              }`}
-              style={{ backgroundColor: themes[t].accent }}
-              title={t.charAt(0).toUpperCase() + t.slice(1)}
-            />
-          ))}
+            <span className="text-sm font-black tracking-[0.2em] text-amber-400 font-mono">
+              EXPORT VERDICT
+            </span>
+          </div>
         </motion.div>
 
         {/* Card Preview */}
         <motion.div
-          className="mb-8"
+          className="mb-8 w-full max-w-md"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.2 }}
         >
           <div
             ref={cardRef}
-            className="p-8 rounded-lg"
-            style={{ backgroundColor: currentTheme.bg }}
+            className="p-6 border-2 border-white/20"
+            style={{ backgroundColor: '#000000' }}
           >
-            {/* Card Header */}
-            <div className="text-center mb-6">
-              <div
-                className="text-xs tracking-widest mb-2 opacity-60"
-                style={{ color: currentTheme.text }}
-              >
-                THE COURT HAS RULED
+            {/* Corner brackets */}
+            <div className="relative">
+              <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-red-500" />
+              <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-red-500" />
+              <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-red-500" />
+              <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-red-500" />
+
+              {/* Card Header */}
+              <div className="text-center mb-4 pt-2">
+                <div className="text-white/40 text-[10px] font-mono tracking-widest mb-2">
+                  THE COURT HAS RULED
+                </div>
+                <div className="text-amber-400 text-3xl font-black font-mono tracking-wider">
+                  {winnerName.toUpperCase()}
+                </div>
+                {verdict.winner !== 'Draw' && (
+                  <div className="text-green-500 text-sm font-mono font-bold mt-1">
+                    PREVAILS
+                  </div>
+                )}
               </div>
-              <div
-                className="text-4xl sm:text-5xl font-bold tracking-wider"
-                style={{ color: currentTheme.accent }}
-              >
-                {winnerName.toUpperCase()}
+
+              {/* Divider */}
+              <div className="h-px bg-white/20 my-4" />
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-2 mb-4">
+                <div className="text-center">
+                  <div className="text-green-400 text-xl font-black font-mono">
+                    {verdict.credibility.partyA}%
+                  </div>
+                  <div className="text-white/40 text-[10px] font-mono truncate">
+                    {partyAName}
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-red-500 text-xl font-black font-mono">
+                    {verdict.toxicity}%
+                  </div>
+                  <div className="text-white/40 text-[10px] font-mono">
+                    TOXICITY
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-red-400 text-xl font-black font-mono">
+                    {verdict.credibility.partyB}%
+                  </div>
+                  <div className="text-white/40 text-[10px] font-mono truncate">
+                    {partyBName}
+                  </div>
+                </div>
               </div>
-              {verdict.winner !== 'Draw' && (
-                <div
-                  className="text-lg mt-1"
-                  style={{ color: currentTheme.text }}
-                >
-                  PREVAILS
+
+              {/* Verdict Summary */}
+              {loserName && (
+                <div className="bg-red-900/20 border border-red-500/30 p-3 mb-4">
+                  <div className="text-red-500 text-[10px] font-mono font-bold mb-1">
+                    GUILTY PARTY: {loserName.toUpperCase()}
+                  </div>
+                  <div className="text-white/60 text-xs font-mono leading-relaxed">
+                    "{verdict.winner_reason}"
+                  </div>
                 </div>
               )}
-            </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="text-center">
-                <div
-                  className="text-2xl font-bold"
-                  style={{ color: currentTheme.accent }}
-                >
-                  {verdict.credibility.partyA}%
-                </div>
-                <div
-                  className="text-xs opacity-60"
-                  style={{ color: currentTheme.text }}
-                >
-                  {partyAName}
-                </div>
+              {/* Footer */}
+              <div className="flex items-center justify-between text-[10px] font-mono pb-2">
+                <span className="text-white/30">CASE #{Date.now().toString().slice(-6)}</span>
+                <span className="text-amber-400/60 tracking-widest">JUDGED BY AI</span>
               </div>
-              <div className="text-center">
-                <div
-                  className="text-2xl font-bold"
-                  style={{ color: '#FF3B3B' }}
-                >
-                  {verdict.toxicity}%
-                </div>
-                <div
-                  className="text-xs opacity-60"
-                  style={{ color: currentTheme.text }}
-                >
-                  TOXICITY
-                </div>
-              </div>
-              <div className="text-center">
-                <div
-                  className="text-2xl font-bold"
-                  style={{ color: currentTheme.accent }}
-                >
-                  {verdict.credibility.partyB}%
-                </div>
-                <div
-                  className="text-xs opacity-60"
-                  style={{ color: currentTheme.text }}
-                >
-                  {partyBName}
-                </div>
-              </div>
-            </div>
-
-            {/* Verdict Summary */}
-            <div
-              className="text-center text-sm opacity-80 mb-6"
-              style={{ color: currentTheme.text }}
-            >
-              "{verdict.winner_reason}"
-            </div>
-
-            {/* Footer */}
-            <div
-              className="text-center text-xs tracking-widest opacity-40"
-              style={{ color: currentTheme.text }}
-            >
-              JUDGED BY AI • JUSTICE SERVED
             </div>
           </div>
         </motion.div>
 
         {/* Action Buttons */}
         <motion.div
-          className="flex flex-wrap gap-4 justify-center"
+          className="w-full max-w-md space-y-3"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.3 }}
         >
-          <button
-            onClick={downloadCard}
-            disabled={isGenerating}
-            className="bg-judge-gold text-judge-black px-6 py-3 font-bold tracking-wider hover:bg-judge-gold/80 transition-colors disabled:opacity-50"
-          >
-            {isGenerating ? 'GENERATING...' : 'DOWNLOAD PNG'}
-          </button>
-          <button
-            onClick={copyToClipboard}
-            disabled={isGenerating}
-            className="border border-judge-white/30 text-judge-white px-6 py-3 font-bold tracking-wider hover:bg-judge-white/10 transition-colors disabled:opacity-50"
-          >
-            COPY TO CLIPBOARD
-          </button>
+          {/* Share button (primary) */}
           <button
             onClick={shareNative}
             disabled={isGenerating}
-            className="border border-judge-purple text-judge-purple px-6 py-3 font-bold tracking-wider hover:bg-judge-purple/10 transition-colors disabled:opacity-50"
+            className="w-full py-4 font-black text-sm tracking-wider uppercase font-mono transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100"
+            style={{
+              background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+              border: '2px solid #dc2626',
+              color: 'white',
+            }}
           >
-            SHARE
+            {isGenerating ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="animate-pulse">●</span> GENERATING...
+              </span>
+            ) : (
+              'SHARE VERDICT'
+            )}
           </button>
+
+          {/* Secondary actions */}
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={downloadCard}
+              disabled={isGenerating}
+              className="py-3 font-bold text-xs tracking-wider uppercase font-mono transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              style={{
+                background: 'transparent',
+                border: '2px solid rgba(255,255,255,0.3)',
+                color: 'white',
+              }}
+            >
+              DOWNLOAD
+            </button>
+            <button
+              onClick={copyToClipboard}
+              disabled={isGenerating}
+              className="py-3 font-bold text-xs tracking-wider uppercase font-mono transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+              style={{
+                background: 'transparent',
+                border: '2px solid rgba(255,255,255,0.3)',
+                color: copied ? '#22c55e' : 'white',
+              }}
+            >
+              {copied ? 'COPIED!' : 'COPY'}
+            </button>
+          </div>
         </motion.div>
 
-        {/* Back to New Case */}
-        <motion.div
-          className="text-center mt-8"
+        {/* New Case link */}
+        <motion.button
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
+          transition={{ delay: 0.4 }}
+          onClick={() => {
+            sessionStorage.removeItem('evidence')
+            sessionStorage.removeItem('verdict')
+            localStorage.removeItem('evidence')
+            localStorage.removeItem('verdict')
+            navigate('/')
+          }}
+          className="mt-8 text-white/30 hover:text-white/60 text-xs font-mono tracking-wider transition-colors"
         >
-          <button
-            onClick={() => {
-              sessionStorage.removeItem('evidence')
-              sessionStorage.removeItem('verdict')
-              navigate('/')
-            }}
-            className="text-judge-white/60 hover:text-judge-white text-sm tracking-wider"
-          >
-            FILE A NEW CASE
-          </button>
-        </motion.div>
+          [FILE NEW CASE]
+        </motion.button>
+      </div>
+
+      {/* Bottom bar - police tape style */}
+      <div className="relative h-8 overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'repeating-linear-gradient(90deg, #dc2626 0px, #dc2626 20px, #000 20px, #000 40px)',
+          }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="bg-black px-4 text-amber-400/60 text-[10px] font-mono tracking-widest">
+            VERDICT EXPORTED
+          </span>
+        </div>
       </div>
     </div>
   )

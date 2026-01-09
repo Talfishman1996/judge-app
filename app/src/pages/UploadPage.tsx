@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
 
@@ -15,6 +15,26 @@ export default function UploadPage() {
   const navigate = useNavigate()
   const [exhibits, setExhibits] = useState<Exhibit[]>([])
   const [isDragging, setIsDragging] = useState(false)
+  const [timestamp, setTimestamp] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const updateTime = () => {
+      setTimestamp(new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }))
+    }
+    updateTime()
+    const interval = setInterval(updateTime, 1000)
+    return () => clearInterval(interval)
+  }, [])
 
   const handleFiles = useCallback((files: FileList | null) => {
     if (!files) return
@@ -23,7 +43,7 @@ export default function UploadPage() {
     const currentCount = exhibits.length
 
     Array.from(files).forEach((file, index) => {
-      if (currentCount + index >= 10) return // Max 10 exhibits
+      if (currentCount + index >= 10) return
       if (!file.type.startsWith('image/')) return
 
       const exhibit: Exhibit = {
@@ -57,7 +77,6 @@ export default function UploadPage() {
   const removeExhibit = useCallback((id: string) => {
     setExhibits(prev => {
       const filtered = prev.filter(e => e.id !== id)
-      // Relabel exhibits
       return filtered.map((exhibit, index) => ({
         ...exhibit,
         label: EXHIBIT_LABELS[index]
@@ -66,154 +85,231 @@ export default function UploadPage() {
   }, [])
 
   const handleSubmit = async () => {
-    if (exhibits.length === 0) return
+    if (exhibits.length === 0 || isSubmitting) return
 
-    // Convert images to base64 for API
-    const exhibitData = await Promise.all(
-      exhibits.map(async (exhibit) => {
-        const base64 = await fileToBase64(exhibit.file)
-        return {
-          label: exhibit.label,
-          data: base64,
-          type: exhibit.file.type
-        }
-      })
-    )
+    setIsSubmitting(true)
+    setSubmitError(null)
 
-    // Store in sessionStorage for deliberation page
-    sessionStorage.setItem('evidence', JSON.stringify({
-      type: 'screenshots',
-      exhibits: exhibitData
-    }))
+    try {
+      const exhibitData = await Promise.all(
+        exhibits.map(async (exhibit) => {
+          const base64 = await fileToBase64(exhibit.file)
+          return {
+            label: exhibit.label,
+            data: base64,
+            type: exhibit.file.type
+          }
+        })
+      )
 
-    navigate('/deliberation')
+      const evidencePayload = {
+        type: 'screenshots',
+        exhibits: exhibitData
+      }
+
+      sessionStorage.setItem('evidence', JSON.stringify(evidencePayload))
+      localStorage.setItem('evidence', JSON.stringify(evidencePayload))
+
+      navigate('/deliberation')
+    } catch (err) {
+      console.error('Submit error:', err)
+      setSubmitError(err instanceof Error ? err.message : 'Failed to process images')
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <div className="min-h-screen bg-judge-black flex flex-col p-4 sm:p-8">
-      {/* Header */}
-      <motion.div
-        className="text-center mb-8"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+    <div className="min-h-screen bg-black flex flex-col relative overflow-hidden">
+      {/* Scan lines overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none z-30 opacity-20"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            0deg,
+            transparent 0px,
+            transparent 2px,
+            rgba(0,0,0,0.3) 2px,
+            rgba(0,0,0,0.3) 4px
+          )`,
+        }}
+      />
+
+      {/* Corner timestamp */}
+      <div className="absolute top-3 left-3 z-40 font-mono text-[10px] text-white/50">
+        <div className="text-red-500 flex items-center gap-1">
+          <span className="animate-pulse">●</span> REC
+        </div>
+        <div>{timestamp}</div>
+        <div>EVIDENCE INTAKE</div>
+      </div>
+
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/')}
+        className="absolute top-3 right-3 z-40 text-white/30 hover:text-white text-[10px] font-mono tracking-wider transition-colors"
       >
-        <h1 className="text-judge-gold text-2xl sm:text-3xl font-bold tracking-widest">
-          SUBMIT EVIDENCE
-        </h1>
-        <p className="text-judge-white/60 text-sm mt-2">
-          Upload up to 10 screenshots as exhibits
+        [BACK]
+      </button>
+
+      {/* Header */}
+      <div className="pt-16 pb-4 px-4 text-center">
+        <motion.div
+          initial={{ scale: 0, rotate: -30 }}
+          animate={{ scale: 1, rotate: -6 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+          className="inline-block mb-4"
+        >
+          <div
+            className="px-6 py-2 border-2 border-red-600"
+            style={{ background: 'rgba(0,0,0,0.8)' }}
+          >
+            <span className="text-sm font-black tracking-[0.2em] text-red-500 font-mono">
+              SUBMIT EVIDENCE
+            </span>
+          </div>
+        </motion.div>
+
+        <p className="text-white/40 text-xs font-mono tracking-wider">
+          UPLOAD UP TO 10 SCREENSHOTS AS EXHIBITS
         </p>
-      </motion.div>
+      </div>
 
       {/* Drop Zone */}
-      <motion.div
-        className={`flex-1 border-2 border-dashed rounded-lg p-4 sm:p-8 transition-colors duration-300 ${
-          isDragging
-            ? 'border-judge-gold bg-judge-gold/10'
-            : 'border-judge-white/30 hover:border-judge-gold/50'
-        } ${exhibits.length >= 10 ? 'opacity-50 pointer-events-none' : ''}`}
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        {exhibits.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-center">
-            <div className="text-judge-gold text-6xl mb-4">+</div>
-            <p className="text-judge-white text-lg font-bold tracking-wider mb-2">
-              DROP SCREENSHOTS HERE
-            </p>
-            <p className="text-judge-white/60 text-sm mb-4">
-              or click to select files
-            </p>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="hidden"
-              id="file-input"
-              onChange={(e) => handleFiles(e.target.files)}
-            />
-            <label
-              htmlFor="file-input"
-              className="cursor-pointer border border-judge-gold text-judge-gold px-6 py-2 text-sm font-bold tracking-wider hover:bg-judge-gold hover:text-judge-black transition-all duration-300"
-            >
-              SELECT FILES
-            </label>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {exhibits.map((exhibit, index) => (
-              <motion.div
-                key={exhibit.id}
-                className="relative aspect-square bg-judge-white/5 rounded overflow-hidden group"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: index * 0.05 }}
+      <div className="flex-1 px-4 pb-4">
+        <motion.div
+          className={`h-full border-2 border-dashed rounded transition-colors duration-300 ${
+            isDragging
+              ? 'border-red-500 bg-red-500/10'
+              : 'border-white/20 hover:border-white/40'
+          } ${exhibits.length >= 10 ? 'opacity-50 pointer-events-none' : ''}`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+        >
+          {exhibits.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center p-4">
+              <div className="text-red-500 text-6xl mb-4 font-mono">+</div>
+              <p className="text-white font-mono font-bold tracking-wider mb-2">
+                DROP SCREENSHOTS HERE
+              </p>
+              <p className="text-white/40 text-xs font-mono mb-4">
+                or tap to select files
+              </p>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                id="file-input"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+              <label
+                htmlFor="file-input"
+                className="cursor-pointer border-2 border-red-500 text-red-500 px-6 py-3 text-sm font-mono font-bold tracking-wider hover:bg-red-500 hover:text-white transition-all duration-300"
               >
-                <img
-                  src={exhibit.preview}
-                  alt={`Exhibit ${exhibit.label}`}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute top-2 left-2 bg-judge-gold text-judge-black px-2 py-1 text-xs font-bold">
-                  EXHIBIT {exhibit.label}
-                </div>
-                <button
-                  onClick={() => removeExhibit(exhibit.id)}
-                  className="absolute top-2 right-2 bg-judge-red text-white w-6 h-6 rounded-full text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  &times;
-                </button>
-              </motion.div>
-            ))}
+                SELECT FILES
+              </label>
+            </div>
+          ) : (
+            <div className="p-3 h-full overflow-y-auto">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                {exhibits.map((exhibit, index) => (
+                  <motion.div
+                    key={exhibit.id}
+                    className="relative aspect-square bg-white/5 overflow-hidden group"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    {/* Evidence frame corners */}
+                    <div className="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-red-500/60 z-10" />
+                    <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-red-500/60 z-10" />
+                    <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-red-500/60 z-10" />
+                    <div className="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-red-500/60 z-10" />
 
-            {/* Add more button */}
-            {exhibits.length < 10 && (
-              <motion.label
-                htmlFor="file-input-add"
-                className="aspect-square border-2 border-dashed border-judge-white/30 rounded flex items-center justify-center cursor-pointer hover:border-judge-gold transition-colors"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.3, delay: exhibits.length * 0.05 }}
-              >
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  id="file-input-add"
-                  onChange={(e) => handleFiles(e.target.files)}
-                />
-                <span className="text-judge-white/60 text-3xl">+</span>
-              </motion.label>
-            )}
+                    <img
+                      src={exhibit.preview}
+                      alt={`Exhibit ${exhibit.label}`}
+                      className="w-full h-full object-cover"
+                      style={{ filter: 'grayscale(20%) contrast(1.05)' }}
+                    />
+                    <div className="absolute top-1 left-1 bg-red-600 text-white px-2 py-0.5 text-[10px] font-mono font-bold">
+                      EX-{exhibit.label}
+                    </div>
+                    <button
+                      onClick={() => removeExhibit(exhibit.id)}
+                      className="absolute top-1 right-1 bg-black/80 text-red-500 w-6 h-6 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity font-mono"
+                    >
+                      ×
+                    </button>
+                  </motion.div>
+                ))}
+
+                {/* Add more button */}
+                {exhibits.length < 10 && (
+                  <motion.label
+                    htmlFor="file-input-add"
+                    className="aspect-square border-2 border-dashed border-white/20 flex items-center justify-center cursor-pointer hover:border-red-500 transition-colors"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      id="file-input-add"
+                      onChange={(e) => handleFiles(e.target.files)}
+                    />
+                    <span className="text-white/40 text-3xl font-mono">+</span>
+                  </motion.label>
+                )}
+              </div>
+            </div>
+          )}
+        </motion.div>
+      </div>
+
+      {/* Error message */}
+      {submitError && (
+        <div className="px-4 pb-2">
+          <div className="bg-red-900/30 border border-red-500/50 px-4 py-2 text-red-400 text-xs font-mono">
+            ERROR: {submitError}
           </div>
-        )}
-      </motion.div>
+        </div>
+      )}
 
       {/* Submit Button */}
-      <motion.div
-        className="mt-8 flex justify-center"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.4 }}
-      >
+      <div className="p-4 bg-gradient-to-t from-black via-black to-transparent">
         <button
           onClick={handleSubmit}
-          disabled={exhibits.length === 0}
-          className={`px-8 py-4 text-lg font-bold tracking-widest transition-all duration-300 ${
-            exhibits.length > 0
-              ? 'bg-judge-gold text-judge-black hover:bg-judge-gold/80'
-              : 'bg-judge-white/20 text-judge-white/40 cursor-not-allowed'
+          disabled={exhibits.length === 0 || isSubmitting}
+          className={`w-full py-4 font-black text-sm tracking-wider uppercase font-mono transition-all duration-200 ${
+            exhibits.length > 0 && !isSubmitting
+              ? 'hover:scale-[1.02] active:scale-[0.98]'
+              : 'opacity-50 cursor-not-allowed'
           }`}
+          style={{
+            background: exhibits.length > 0 && !isSubmitting
+              ? 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'
+              : 'rgba(255,255,255,0.1)',
+            border: exhibits.length > 0 && !isSubmitting
+              ? '2px solid #dc2626'
+              : '2px solid rgba(255,255,255,0.2)',
+            color: 'white',
+          }}
         >
-          PROCEED TO JUDGMENT ({exhibits.length}/10)
+          {isSubmitting ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="animate-pulse">●</span> PROCESSING...
+            </span>
+          ) : (
+            `PROCEED TO JUDGMENT (${exhibits.length}/10)`
+          )}
         </button>
-      </motion.div>
+      </div>
     </div>
   )
 }

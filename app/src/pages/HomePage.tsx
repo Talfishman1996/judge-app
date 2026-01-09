@@ -1,106 +1,227 @@
+import { useState, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
 
 export default function HomePage() {
   const navigate = useNavigate()
+  const [timestamp, setTimestamp] = useState('')
+  const [phase, setPhase] = useState(0)
+
+  useEffect(() => {
+    // Update timestamp
+    const updateTime = () => {
+      setTimestamp(new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }))
+    }
+    updateTime()
+    const interval = setInterval(updateTime, 1000)
+
+    // Phase animations
+    const timers = [
+      setTimeout(() => setPhase(1), 100),
+      setTimeout(() => setPhase(2), 500),
+      setTimeout(() => setPhase(3), 1000),
+    ]
+
+    return () => {
+      clearInterval(interval)
+      timers.forEach(clearTimeout)
+    }
+  }, [])
 
   return (
-    <div className="min-h-screen bg-judge-black flex flex-col items-center justify-center p-4 sm:p-8 overflow-hidden relative">
-      {/* Background glow effect */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-judge-gold/5 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-black flex flex-col relative overflow-hidden">
+      {/* Scan lines overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none z-30 opacity-20"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            0deg,
+            transparent 0px,
+            transparent 2px,
+            rgba(0,0,0,0.3) 2px,
+            rgba(0,0,0,0.3) 4px
+          )`,
+        }}
+      />
 
-      {/* Navigation Links */}
+      {/* Red vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none z-20"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(127,29,29,0.15) 100%)',
+        }}
+      />
+
+      {/* Corner timestamp - surveillance cam style */}
       <motion.div
-        className="absolute top-4 right-4 flex gap-4"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2.5 }}
+        animate={{ opacity: phase >= 1 ? 1 : 0 }}
+        className="absolute top-3 left-3 z-40 font-mono text-[10px] text-white/50"
+      >
+        <div className="text-red-500 flex items-center gap-1">
+          <span className="animate-pulse">●</span> LIVE
+        </div>
+        <div>{timestamp}</div>
+        <div>CAM-01</div>
+      </motion.div>
+
+      {/* Nav links */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: phase >= 1 ? 1 : 0 }}
+        className="absolute top-3 right-3 z-40 flex gap-3"
       >
         <button
           onClick={() => navigate('/history')}
-          className="text-judge-white/40 hover:text-judge-white text-sm tracking-wider transition-colors"
+          className="text-white/30 hover:text-white text-[10px] font-mono tracking-wider transition-colors"
         >
-          History
+          [HISTORY]
         </button>
         <button
           onClick={() => navigate('/settings')}
-          className="text-judge-white/40 hover:text-judge-white text-sm tracking-wider transition-colors"
+          className="text-white/30 hover:text-white text-[10px] font-mono tracking-wider transition-colors"
         >
-          Settings
+          [CONFIG]
+        </button>
+        <button
+          onClick={() => navigate('/test')}
+          className="text-white/30 hover:text-white text-[10px] font-mono tracking-wider transition-colors"
+        >
+          [TEST]
         </button>
       </motion.div>
 
-      {/* ALL RISE Header with dramatic entrance */}
-      <motion.div
-        className="text-center mb-8 sm:mb-12 relative z-10"
-        initial={{ opacity: 0, scale: 0.8 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      >
-        <motion.h1
-          className="text-judge-gold text-5xl sm:text-6xl md:text-8xl font-bold tracking-ultrawide mb-4 text-shadow-glow"
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 1, delay: 0.3, ease: "easeOut" }}
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+        {/* Status badge */}
+        <motion.div
+          initial={{ scale: 0, rotate: -30 }}
+          animate={{ scale: phase >= 1 ? 1 : 0, rotate: phase >= 1 ? -6 : -30 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+          className="mb-6"
         >
-          ALL RISE
-        </motion.h1>
-        <motion.p
-          className="text-judge-white/60 text-base sm:text-lg tracking-wider"
+          <div
+            className="px-6 py-2 border-2 border-amber-500"
+            style={{ background: 'rgba(0,0,0,0.8)' }}
+          >
+            <span
+              className="text-sm font-black tracking-[0.2em] text-amber-400 font-mono"
+              style={{ textShadow: '0 0 10px rgba(245,158,11,0.5)' }}
+            >
+              COURT IN SESSION
+            </span>
+          </div>
+        </motion.div>
+
+        {/* ALL RISE - Big, impactful */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: phase >= 1 ? 1 : 0, y: phase >= 1 ? 0 : 30 }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-2"
+        >
+          <h1
+            className="text-white text-6xl sm:text-7xl md:text-8xl font-black uppercase tracking-tight"
+            style={{
+              fontFamily: 'Impact, system-ui, sans-serif',
+              textShadow: '2px 2px 0 rgba(0,0,0,0.8)',
+            }}
+          >
+            ALL RISE
+          </h1>
+        </motion.div>
+
+        {/* Subtitle */}
+        <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.8, delay: 0.8 }}
+          animate={{ opacity: phase >= 2 ? 1 : 0 }}
+          className="text-white/40 text-xs font-mono tracking-[0.3em] mb-12"
         >
-          THE COURT IS NOW IN SESSION
-        </motion.p>
-      </motion.div>
+          THE JUDGE WILL SEE YOU NOW
+        </motion.div>
 
-      {/* Main Header */}
-      <motion.h2
-        className="text-judge-white text-xl sm:text-2xl md:text-3xl font-bold tracking-widest mb-8 sm:mb-12 text-center relative z-10"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 1.2 }}
-      >
-        PRESENT YOUR CASE
-      </motion.h2>
+        {/* Action buttons - brutalist style */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: phase >= 2 ? 1 : 0, y: phase >= 2 ? 0 : 20 }}
+          className="w-full max-w-sm space-y-3"
+        >
+          {/* Upload button */}
+          <button
+            onClick={() => navigate('/upload')}
+            className="w-full py-5 font-black text-sm tracking-wider uppercase font-mono transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+              border: '2px solid #dc2626',
+              color: 'white',
+            }}
+          >
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-lg">📸</span>
+              <span>UPLOAD SCREENSHOTS</span>
+            </div>
+            <div className="text-white/50 text-[10px] mt-1 font-normal">
+              Submit visual evidence
+            </div>
+          </button>
 
-      {/* Evidence Type Buttons */}
+          {/* Text input button */}
+          <button
+            onClick={() => navigate('/text')}
+            className="w-full py-5 font-black text-sm tracking-wider uppercase font-mono transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background: 'transparent',
+              border: '2px solid rgba(255,255,255,0.3)',
+              color: 'white',
+            }}
+          >
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-lg">📝</span>
+              <span>PASTE CONVERSATION</span>
+            </div>
+            <div className="text-white/40 text-[10px] mt-1 font-normal">
+              Copy/paste text evidence
+            </div>
+          </button>
+        </motion.div>
+
+        {/* Compare option */}
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: phase >= 3 ? 1 : 0 }}
+          onClick={() => navigate('/compare')}
+          className="mt-6 text-white/30 hover:text-white/60 text-xs font-mono tracking-wider transition-colors"
+        >
+          [COMPARE VERDICTS]
+        </motion.button>
+      </div>
+
+      {/* Bottom bar - police tape style */}
       <motion.div
-        className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full max-w-lg relative z-10"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 1.5 }}
-      >
-        <motion.button
-          onClick={() => navigate('/upload')}
-          className="flex-1 bg-transparent border-2 border-judge-gold text-judge-gold py-4 px-6 sm:px-8 text-base sm:text-lg font-bold tracking-wider transition-all duration-300 hover:bg-judge-gold hover:text-judge-black hover:shadow-[0_0_30px_rgba(212,168,67,0.3)]"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          UPLOAD SCREENSHOTS
-        </motion.button>
-        <motion.button
-          onClick={() => navigate('/text')}
-          className="flex-1 bg-transparent border-2 border-judge-purple text-judge-purple py-4 px-6 sm:px-8 text-base sm:text-lg font-bold tracking-wider transition-all duration-300 hover:bg-judge-purple hover:text-judge-black hover:shadow-[0_0_30px_rgba(139,92,246,0.3)]"
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-        >
-          PASTE TEXT
-        </motion.button>
-      </motion.div>
-
-      {/* Footer */}
-      <motion.p
-        className="text-judge-white/40 text-xs sm:text-sm mt-12 sm:mt-16 tracking-wide relative z-10"
         initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 2 }}
+        animate={{ opacity: phase >= 3 ? 1 : 0 }}
+        className="relative h-8 overflow-hidden"
       >
-        Justice will be served
-      </motion.p>
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'repeating-linear-gradient(90deg, #dc2626 0px, #dc2626 20px, #000 20px, #000 40px)',
+          }}
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="bg-black px-4 text-amber-400/60 text-[10px] font-mono tracking-widest">
+            JUSTICE WILL BE SERVED
+          </span>
+        </div>
+      </motion.div>
     </div>
   )
 }

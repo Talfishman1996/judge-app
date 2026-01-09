@@ -6,53 +6,82 @@ import { saveCase } from '../services/database'
 
 export default function DeliberationPage() {
   const navigate = useNavigate()
-  const [dots, setDots] = useState('')
-  const [status, setStatus] = useState('Analyzing evidence...')
+  const [status, setStatus] = useState('Initializing...')
   const [error, setError] = useState<string | null>(null)
+  const [progress, setProgress] = useState(0)
+  const [timestamp, setTimestamp] = useState('')
 
   useEffect(() => {
-    // Animate the dots
-    const interval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '' : prev + '.')
-    }, 500)
+    const updateTime = () => {
+      setTimestamp(new Date().toLocaleString('en-US', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+      }))
+    }
+    updateTime()
+    const interval = setInterval(updateTime, 1000)
 
-    // Check for evidence
-    const evidenceStr = sessionStorage.getItem('evidence')
+    // Check for evidence (sessionStorage first, localStorage as backup for iOS)
+    const evidenceStr = sessionStorage.getItem('evidence') || localStorage.getItem('evidence')
     if (!evidenceStr) {
       navigate('/')
       return
     }
 
-    const evidence: Evidence = JSON.parse(evidenceStr)
+    let evidence: Evidence
+    try {
+      evidence = JSON.parse(evidenceStr)
+    } catch (e) {
+      console.error('Failed to parse evidence:', e)
+      setError('Failed to load evidence data')
+      return
+    }
 
     // Call the real Gemini API
     const analyzeCase = async () => {
       try {
-        setStatus('Reading the evidence...')
-        await delay(1000)
+        setStatus('SCANNING EVIDENCE...')
+        setProgress(10)
+        await delay(800)
 
-        setStatus('Assessing credibility...')
-        await delay(500)
+        setStatus('RUNNING CREDIBILITY ANALYSIS...')
+        setProgress(25)
+        await delay(600)
 
-        setStatus('Detecting manipulation tactics...')
+        setStatus('DETECTING MANIPULATION PATTERNS...')
+        setProgress(40)
 
         const verdict = await analyzeWithPrompt(evidence)
 
-        setStatus('Preparing verdict...')
-        await delay(500)
+        setStatus('CROSS-REFERENCING RED FLAGS...')
+        setProgress(70)
+        await delay(400)
+
+        setStatus('COMPILING VERDICT...')
+        setProgress(85)
+        await delay(300)
 
         // Save to IndexedDB
         try {
           await saveCase(evidence, verdict)
         } catch (dbError) {
           console.error('Failed to save case to history:', dbError)
-          // Continue even if save fails
         }
 
         // Store verdict in session for display
         sessionStorage.setItem('verdict', JSON.stringify(verdict))
+        localStorage.setItem('verdict', JSON.stringify(verdict))
 
-        navigate('/verdict')
+        setStatus('VERDICT READY')
+        setProgress(100)
+        await delay(500)
+
+        navigate('/verdict/brutalist')
       } catch (err) {
         console.error('Analysis failed:', err)
         setError(err instanceof Error ? err.message : 'Failed to analyze evidence')
@@ -68,151 +97,225 @@ export default function DeliberationPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-judge-black flex flex-col items-center justify-center p-4 sm:p-8">
-        <motion.div
-          className="text-center max-w-md"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <div className="text-judge-red text-6xl mb-6">!</div>
-          <h1 className="text-judge-red text-2xl font-bold tracking-widest mb-4">
-            CASE DISMISSED
-          </h1>
-          <p className="text-judge-white/80 mb-6">{error}</p>
+      <div className="min-h-screen bg-black flex flex-col relative overflow-hidden">
+        {/* Scan lines */}
+        <div
+          className="absolute inset-0 pointer-events-none z-30 opacity-20"
+          style={{
+            backgroundImage: `repeating-linear-gradient(
+              0deg,
+              transparent 0px,
+              transparent 2px,
+              rgba(0,0,0,0.3) 2px,
+              rgba(0,0,0,0.3) 4px
+            )`,
+          }}
+        />
 
-          {error.includes('API key') && (
-            <button
-              onClick={() => navigate('/settings')}
-              className="bg-judge-gold text-judge-black px-6 py-3 font-bold tracking-wider hover:bg-judge-gold/80 transition-colors mb-4"
-            >
-              ADD API KEY
-            </button>
-          )}
-
-          <button
-            onClick={() => navigate('/')}
-            className="block mx-auto text-judge-white/60 hover:text-judge-white text-sm tracking-wider"
+        <div className="flex-1 flex flex-col items-center justify-center p-6">
+          <motion.div
+            className="text-center max-w-md"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
           >
-            &larr; BACK TO COURT
-          </button>
-        </motion.div>
+            <div className="text-red-500 text-6xl mb-6 font-mono">!</div>
+            <div
+              className="px-6 py-2 border-2 border-red-600 inline-block mb-6"
+              style={{ background: 'rgba(0,0,0,0.8)' }}
+            >
+              <span className="text-sm font-black tracking-[0.2em] text-red-500 font-mono">
+                CASE DISMISSED
+              </span>
+            </div>
+            <p className="text-white/60 mb-6 font-mono text-sm">{error}</p>
+
+            {error.includes('API key') && (
+              <button
+                onClick={() => navigate('/settings')}
+                className="w-full py-3 font-mono font-bold text-sm tracking-wider mb-4"
+                style={{
+                  background: 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                  border: '2px solid #dc2626',
+                  color: 'white',
+                }}
+              >
+                ADD API KEY
+              </button>
+            )}
+
+            <button
+              onClick={() => navigate('/')}
+              className="text-white/40 hover:text-white font-mono text-xs tracking-wider"
+            >
+              [BACK TO COURT]
+            </button>
+          </motion.div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-judge-black flex flex-col items-center justify-center p-4 sm:p-8">
-      {/* Scales of Justice Animation */}
-      <motion.div
-        className="text-judge-gold text-8xl mb-8"
-        animate={{
-          rotate: [0, -5, 5, -5, 5, 0],
-          scale: [1, 1.05, 1, 1.05, 1]
+    <div className="min-h-screen bg-black flex flex-col relative overflow-hidden">
+      {/* Scan lines overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none z-30 opacity-20"
+        style={{
+          backgroundImage: `repeating-linear-gradient(
+            0deg,
+            transparent 0px,
+            transparent 2px,
+            rgba(0,0,0,0.3) 2px,
+            rgba(0,0,0,0.3) 4px
+          )`,
         }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          ease: "easeInOut"
+      />
+
+      {/* Red vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none z-20"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(127,29,29,0.2) 100%)',
         }}
-      >
-        <svg viewBox="0 0 100 100" className="w-24 h-24 sm:w-32 sm:h-32">
-          <motion.path
-            d="M50 10 L50 70 M30 70 L70 70"
-            stroke="currentColor"
-            strokeWidth="4"
-            fill="none"
-            strokeLinecap="round"
-          />
-          <motion.circle
-            cx="50"
-            cy="10"
-            r="6"
-            fill="currentColor"
-          />
-          <motion.path
-            d="M20 35 L30 70 M80 35 L70 70"
-            stroke="currentColor"
-            strokeWidth="3"
-            fill="none"
-            strokeLinecap="round"
-            animate={{
-              d: [
-                "M20 35 L30 70 M80 35 L70 70",
-                "M25 40 L30 70 M75 30 L70 70",
-                "M20 35 L30 70 M80 35 L70 70"
-              ]
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          />
-          {/* Left plate */}
-          <motion.ellipse
-            cx="20"
-            cy="35"
-            rx="15"
-            ry="5"
-            fill="currentColor"
-            opacity="0.8"
-            animate={{ cy: [35, 40, 35] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          />
-          {/* Right plate */}
-          <motion.ellipse
-            cx="80"
-            cy="35"
-            rx="15"
-            ry="5"
-            fill="currentColor"
-            opacity="0.8"
-            animate={{ cy: [35, 30, 35] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          />
-        </svg>
-      </motion.div>
+      />
 
-      {/* Header */}
-      <motion.h1
-        className="text-judge-gold text-2xl sm:text-4xl font-bold tracking-widest text-center mb-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        THE JUDGE IS DELIBERATING{dots}
-      </motion.h1>
+      {/* Corner timestamp */}
+      <div className="absolute top-3 left-3 z-40 font-mono text-[10px] text-white/50">
+        <div className="text-red-500 flex items-center gap-1">
+          <span className="animate-pulse">●</span> PROCESSING
+        </div>
+        <div>{timestamp}</div>
+        <div>DELIBERATION</div>
+      </div>
 
-      {/* Status */}
-      <motion.p
-        className="text-judge-white/60 text-sm sm:text-base text-center max-w-md"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        key={status}
-      >
-        {status}
-      </motion.p>
-
-      {/* Indeterminate progress bar */}
-      <motion.div
-        className="w-64 h-1 bg-judge-white/20 mt-8 rounded-full overflow-hidden"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-      >
+      {/* Main content */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+        {/* Scales animation */}
         <motion.div
-          className="h-full w-1/3 bg-judge-gold"
+          className="text-amber-500 mb-8"
           animate={{
-            x: ['-100%', '300%']
+            rotate: [0, -5, 5, -5, 5, 0],
+            scale: [1, 1.05, 1, 1.05, 1]
           }}
           transition={{
-            duration: 1.5,
+            duration: 2,
             repeat: Infinity,
             ease: "easeInOut"
           }}
+        >
+          <svg viewBox="0 0 100 100" className="w-24 h-24 sm:w-32 sm:h-32">
+            <motion.path
+              d="M50 10 L50 70 M30 70 L70 70"
+              stroke="currentColor"
+              strokeWidth="4"
+              fill="none"
+              strokeLinecap="round"
+            />
+            <motion.circle
+              cx="50"
+              cy="10"
+              r="6"
+              fill="currentColor"
+            />
+            <motion.path
+              d="M20 35 L30 70 M80 35 L70 70"
+              stroke="currentColor"
+              strokeWidth="3"
+              fill="none"
+              strokeLinecap="round"
+              animate={{
+                d: [
+                  "M20 35 L30 70 M80 35 L70 70",
+                  "M25 40 L30 70 M75 30 L70 70",
+                  "M20 35 L30 70 M80 35 L70 70"
+                ]
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }}
+            />
+            <motion.ellipse
+              cx="20"
+              cy="35"
+              rx="15"
+              ry="5"
+              fill="currentColor"
+              opacity="0.8"
+              animate={{ cy: [35, 40, 35] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <motion.ellipse
+              cx="80"
+              cy="35"
+              rx="15"
+              ry="5"
+              fill="currentColor"
+              opacity="0.8"
+              animate={{ cy: [35, 30, 35] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </svg>
+        </motion.div>
+
+        {/* Status badge */}
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="mb-4"
+        >
+          <div
+            className="px-6 py-2 border-2 border-amber-500"
+            style={{ background: 'rgba(0,0,0,0.8)' }}
+          >
+            <span className="text-sm font-black tracking-[0.2em] text-amber-400 font-mono">
+              DELIBERATING
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Status text */}
+        <motion.p
+          className="text-white/60 font-mono text-sm text-center mb-8"
+          key={status}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {status}
+        </motion.p>
+
+        {/* Progress bar */}
+        <div className="w-64 h-2 bg-white/10 overflow-hidden">
+          <motion.div
+            className="h-full"
+            style={{
+              background: 'linear-gradient(90deg, #f59e0b, #dc2626)',
+            }}
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.3 }}
+          />
+        </div>
+        <div className="text-white/40 text-[10px] font-mono mt-2">
+          {progress}% COMPLETE
+        </div>
+      </div>
+
+      {/* Bottom bar */}
+      <div className="relative h-8 overflow-hidden">
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'repeating-linear-gradient(90deg, #dc2626 0px, #dc2626 20px, #000 20px, #000 40px)',
+          }}
         />
-      </motion.div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="bg-black px-4 text-amber-400/60 text-[10px] font-mono tracking-widest">
+            ANALYZING EVIDENCE
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
