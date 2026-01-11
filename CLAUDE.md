@@ -1,6 +1,64 @@
 # JUDGE - AI Courtroom Verdict App
 
-## Natural Language Triggers (READ THIS FIRST)
+## AUTONOMOUS TOOLS - USE WITHOUT ASKING (READ FIRST!)
+
+Claude MUST use these tools automatically throughout every session. DO NOT wait for user to ask.
+
+### Dual Memory System (USE BOTH CONSTANTLY)
+
+| Situation | Tool | Example |
+|-----------|------|---------|
+| Starting session | MCP Memory | `mcp__memory__open_nodes` names=["JUDGE_App", "Design_System"] |
+| Learning user preference | MCP Memory | `mcp__memory__add_observations` to User_Preferences entity |
+| Storing project fact | MCP Memory | `mcp__memory__add_observations` to JUDGE_App entity |
+| Finding past work | Recall | `/recall "verdict page styling"` |
+| Making design decision | MCP Memory | Add observation with rationale |
+| Connecting concepts | MCP Memory | `mcp__memory__create_relations` |
+| End of session | MCP Memory | Add new observations to relevant entities |
+
+**MCP Memory Entity for this project: `JUDGE_App`** - add observations here for project facts.
+
+### Ralph Loop - PROACTIVE USE (Don't Wait!)
+
+**AUTO-SUGGEST ralph-loop when task involves:**
+- Building new features or components
+- Multiple file changes
+- Iteration needed (build → test → fix)
+- Clear completion: `npm run build` passes, tests pass
+- User says "add", "implement", "build", "create", "finish"
+
+**Proactively suggest:**
+```
+This looks like a multi-step task. I recommend autonomous mode:
+
+/ralph-loop "Build JUDGE feature: [FEATURE]" --max-iterations 30 --completion-promise "BUILD_PASSES"
+```
+
+**Test command for this project:** `cd app && npm run build`
+
+### Browser Automation (Chrome DevTools PRIMARY)
+For web scraping, testing, visual verification:
+```
+mcp__chrome-devtools__take_snapshot
+mcp__chrome-devtools__navigate_page
+mcp__chrome-devtools__click / mcp__chrome-devtools__fill
+mcp__chrome-devtools__take_screenshot
+```
+
+**Secondary (if Chrome DevTools unavailable):** Use Browserbase tools.
+
+### AUTOMATIC BEHAVIORS (No user request needed)
+
+1. **Session Start**: Load JUDGE_App entity from MCP memory
+2. **After design changes**: Add observation to Design_System entity
+3. **After completing feature**: Add observation to JUDGE_App, update PRD.json
+4. **When stuck**: Use `/recall` for similar past solutions
+5. **New user preference learned**: Add to User_Preferences entity
+6. **Technical decision made**: Create observation with WHY
+
+---
+
+## Natural Language Triggers (Ralph Loop)
 
 When the user says ANY of these phrases, they want autonomous/ralph loop mode:
 - "keep working until done"
@@ -19,13 +77,9 @@ AUTONOMOUS MODE REQUESTED
 To start ralph loop, copy and run this command:
 
 /ralph-loop "Build JUDGE app feature by feature using PRD.json" --max-iterations 50
-
-Or for your autonomous.ps1:
-
-autonomous "Build JUDGE app" -t "npm run build" -p "C:\Users\Admin\Desktop\judge-app\app" -y
 ```
 
-Do NOT just start working - the user needs to invoke the external wrapper.
+Do NOT just start working - the user needs to invoke the skill.
 
 ---
 
