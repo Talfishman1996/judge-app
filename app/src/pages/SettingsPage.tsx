@@ -10,14 +10,22 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false)
 
   useEffect(() => {
-    // Load stored API key
-    const storedKey = localStorage.getItem('gemini_api_key')
-    if (storedKey) {
-      setApiKey(storedKey)
+    // Load stored API key and case count asynchronously
+    const loadSettings = async () => {
+      const storedKey = localStorage.getItem('gemini_api_key')
+      if (storedKey) {
+        setApiKey(storedKey)
+      }
+
+      try {
+        const count = await getCaseCount()
+        setCaseCount(count)
+      } catch (err) {
+        console.error('Failed to get case count:', err)
+      }
     }
 
-    // Get case count
-    getCaseCount().then(setCaseCount).catch(console.error)
+    loadSettings()
   }, [])
 
   const saveApiKey = () => {

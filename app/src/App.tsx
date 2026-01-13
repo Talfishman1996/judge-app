@@ -6,16 +6,11 @@ import UploadPage from './pages/UploadPage'
 import TextInputPage from './pages/TextInputPage'
 import DeliberationPage from './pages/DeliberationPage'
 import VerdictPage from './pages/VerdictPage'
-import VerdictPageStory from './pages/VerdictPageStory'
-import VerdictPageSummary from './pages/VerdictPageSummary'
-import VerdictPageCarousel from './pages/VerdictPageCarousel'
 import SharePage from './pages/SharePage'
 import HistoryPage from './pages/HistoryPage'
 import SettingsPage from './pages/SettingsPage'
 import TestPage from './pages/TestPage'
 import ComparePage from './pages/ComparePage'
-import VerdictPageTabloid from './pages/VerdictPageTabloid'
-import VerdictPageBrutalist from './pages/VerdictPageBrutalist'
 
 function AnimatedRoutes() {
   const location = useLocation()
@@ -27,17 +22,12 @@ function AnimatedRoutes() {
         <Route path="/upload" element={<Layout><UploadPage /></Layout>} />
         <Route path="/text" element={<Layout><TextInputPage /></Layout>} />
         <Route path="/deliberation" element={<Layout><DeliberationPage /></Layout>} />
-        <Route path="/verdict" element={<Layout><VerdictPage /></Layout>} />
-        <Route path="/verdict/story" element={<VerdictPageStory />} />
-        <Route path="/verdict/summary" element={<Layout><VerdictPageSummary /></Layout>} />
-        <Route path="/verdict/carousel" element={<Layout><VerdictPageCarousel /></Layout>} />
+        <Route path="/verdict" element={<VerdictPage />} />
         <Route path="/share" element={<Layout><SharePage /></Layout>} />
         <Route path="/history" element={<Layout><HistoryPage /></Layout>} />
         <Route path="/settings" element={<Layout><SettingsPage /></Layout>} />
         <Route path="/test" element={<TestPage />} />
         <Route path="/compare" element={<ComparePage />} />
-        <Route path="/verdict/tabloid" element={<VerdictPageTabloid />} />
-        <Route path="/verdict/brutalist" element={<VerdictPageBrutalist />} />
       </Routes>
     </AnimatePresence>
   )

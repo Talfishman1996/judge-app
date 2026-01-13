@@ -1,13 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 export default function TestPage() {
   const navigate = useNavigate()
-  const [testMode, setTestMode] = useState(false)
-
-  useEffect(() => {
-    setTestMode(localStorage.getItem('testMode') === 'true')
-  }, [])
+  const [testMode, setTestMode] = useState(() => localStorage.getItem('testMode') === 'true')
 
   const toggleTestMode = () => {
     const newValue = !testMode

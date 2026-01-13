@@ -133,7 +133,7 @@ Analyze the following ${evidence.exhibits.length} screenshot(s) submitted as evi
 Extract the conversation, identify the parties, and deliver your verdict.`
   }
 
-  const requestBody: any = {
+  const requestBody = {
     contents: [
       {
         role: 'user',
@@ -193,7 +193,7 @@ Extract the conversation, identify the parties, and deliver your verdict.`
   try {
     const verdict = JSON.parse(responseText) as VerdictResponse
     return verdict
-  } catch (e) {
+  } catch {
     console.error('Failed to parse verdict JSON:', responseText)
     throw new Error('Failed to parse verdict response')
   }
@@ -275,7 +275,7 @@ Analyze the following ${evidence.exhibits.length} screenshot(s) submitted as evi
 Extract the conversation, identify the parties, and deliver your verdict.`
   }
 
-  const requestBody: any = {
+  const requestBody = {
     contents: [
       {
         role: 'user',
@@ -338,7 +338,7 @@ Extract the conversation, identify the parties, and deliver your verdict.`
   try {
     const verdict = JSON.parse(jsonMatch[0]) as VerdictResponse
     return verdict
-  } catch (e) {
+  } catch {
     console.error('Failed to parse verdict JSON:', jsonMatch[0])
     throw new Error('Failed to parse verdict response')
   }

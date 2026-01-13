@@ -160,4 +160,50 @@ body {
     color: rgba(212, 168, 67, 0.4);
     font-family: Georgia, serif;
   }
+
+  /* V2 Verdict Page Utilities */
+
+  /* Yellow CTA button */
+  .btn-verdict-share {
+    background: linear-gradient(135deg, #facc15 0%, #eab308 100%);
+    color: #000;
+    font-weight: 800;
+    padding: 16px 24px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .btn-verdict-share:hover {
+    background: linear-gradient(135deg, #fde047 0%, #facc15 100%);
+  }
+
+  /* Key metrics card */
+  .card-metric {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  /* Toxicity progress bar */
+  .toxicity-bar {
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .toxicity-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.5s ease-out;
+  }
+
+  /* Case closed footer */
+  .case-closed-footer {
+    background: linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.3), transparent);
+    border-top: 1px solid rgba(220, 38, 38, 0.5);
+    border-bottom: 1px solid rgba(220, 38, 38, 0.5);
+  }
 }

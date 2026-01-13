@@ -33,17 +33,17 @@ export default function DeliberationPage() {
       return
     }
 
-    let evidence: Evidence
-    try {
-      evidence = JSON.parse(evidenceStr)
-    } catch (e) {
-      console.error('Failed to parse evidence:', e)
-      setError('Failed to load evidence data')
-      return
-    }
-
     // Call the real Gemini API
     const analyzeCase = async () => {
+      let evidence: Evidence
+      try {
+        evidence = JSON.parse(evidenceStr)
+      } catch (e) {
+        console.error('Failed to parse evidence:', e)
+        setError('Failed to load evidence data')
+        return
+      }
+
       try {
         setStatus('SCANNING EVIDENCE...')
         setProgress(10)

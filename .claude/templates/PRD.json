@@ -1,0 +1,31 @@
+{
+  "$schema": "./PRD.schema.json",
+  "project": "PROJECT_NAME",
+  "description": "Brief description of what this project does",
+  "tech_stack": ["React", "Node.js", "SQLite"],
+  "features": [
+    {
+      "id": 1,
+      "name": "Project setup and scaffolding",
+      "description": "Initialize project structure, install dependencies, configure build tools",
+      "acceptance_criteria": [
+        "Project runs with npm start",
+        "Basic folder structure exists",
+        "Dependencies installed"
+      ],
+      "priority": 1,
+      "passes": false
+    },
+    {
+      "id": 2,
+      "name": "Feature 2 name",
+      "description": "What this feature does",
+      "acceptance_criteria": [
+        "Criterion 1",
+        "Criterion 2"
+      ],
+      "priority": 2,
+      "passes": false
+    }
+  ]
+}
