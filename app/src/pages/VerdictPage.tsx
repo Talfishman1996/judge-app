@@ -108,7 +108,6 @@ export default function VerdictPage() {
   const loserName = verdict.winner === 'Party A' ? partyBName :
     verdict.winner === 'Party B' ? partyAName : null
 
-  const winnerCredibility = verdict.winner === 'Party A' ? verdict.credibility.partyA : verdict.credibility.partyB
 
   // Get toxicity level label
   const getToxicityLabel = (toxicity: number) => {
@@ -191,13 +190,7 @@ export default function VerdictPage() {
 
               <div className="text-center">
                 <div className="text-emerald-400 text-xs font-bold tracking-widest mb-1">CLEARED</div>
-                <div className="text-white text-2xl font-bold mb-1">{winnerName}</div>
-                <div className="text-emerald-400 text-base font-bold mb-2">{winnerCredibility}% RIGHT</div>
-                <p className="text-white/60 text-[11px] leading-relaxed">
-                  {verdict.winner_reason.length > 60
-                    ? verdict.winner_reason.substring(0, 60) + '...'
-                    : verdict.winner_reason}
-                </p>
+                <div className="text-white text-2xl font-bold ">{winnerName}</div>
               </div>
             </motion.div>
 
