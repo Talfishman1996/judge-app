@@ -108,9 +108,27 @@ IMPORTANT:
 - judges_opinion should be authoritative and cite specific evidence
 - Do NOT add any text before or after the JSON`
 
+/**
+ * Get Gemini API key from environment variables.
+ *
+ * Setup instructions:
+ * 1. Copy .env.example to .env in the app/ directory
+ * 2. Add your Gemini API key: VITE_GEMINI_API_KEY=your_key_here
+ * 3. Get a free key from: https://aistudio.google.com/app/apikey
+ *
+ * Note: Vite only exposes env vars prefixed with VITE_
+ */
 function getApiKey(): string {
-  // Hardcoded API key - creator foots the bill
-  return 'AIzaSyAAFMVltRc4lu1uAfCcNG1ZLtefWC5noQU'
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY
+
+  if (!apiKey) {
+    throw new Error(
+      'Gemini API key not found. Please set VITE_GEMINI_API_KEY in your .env file. ' +
+      'See .env.example for setup instructions.'
+    )
+  }
+
+  return apiKey
 }
 
 export async function analyzeEvidence(evidence: Evidence): Promise<VerdictResponse> {

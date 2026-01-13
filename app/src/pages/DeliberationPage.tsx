@@ -9,23 +9,8 @@ export default function DeliberationPage() {
   const [status, setStatus] = useState('Initializing...')
   const [error, setError] = useState<string | null>(null)
   const [progress, setProgress] = useState(0)
-  const [timestamp, setTimestamp] = useState('')
 
   useEffect(() => {
-    const updateTime = () => {
-      setTimestamp(new Date().toLocaleString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false,
-      }))
-    }
-    updateTime()
-    const interval = setInterval(updateTime, 1000)
-
     // Check for evidence (sessionStorage first, localStorage as backup for iOS)
     const evidenceStr = sessionStorage.getItem('evidence') || localStorage.getItem('evidence')
     if (!evidenceStr) {
@@ -81,7 +66,7 @@ export default function DeliberationPage() {
         setProgress(100)
         await delay(500)
 
-        navigate('/verdict/brutalist')
+        navigate('/verdict')
       } catch (err) {
         console.error('Analysis failed:', err)
         setError(err instanceof Error ? err.message : 'Failed to analyze evidence')
@@ -89,29 +74,11 @@ export default function DeliberationPage() {
     }
 
     analyzeCase()
-
-    return () => {
-      clearInterval(interval)
-    }
   }, [navigate])
 
   if (error) {
     return (
       <div className="min-h-screen bg-black flex flex-col relative overflow-hidden">
-        {/* Scan lines */}
-        <div
-          className="absolute inset-0 pointer-events-none z-30 opacity-20"
-          style={{
-            backgroundImage: `repeating-linear-gradient(
-              0deg,
-              transparent 0px,
-              transparent 2px,
-              rgba(0,0,0,0.3) 2px,
-              rgba(0,0,0,0.3) 4px
-            )`,
-          }}
-        />
-
         <div className="flex-1 flex flex-col items-center justify-center p-6">
           <motion.div
             className="text-center max-w-md"
@@ -157,42 +124,16 @@ export default function DeliberationPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col relative overflow-hidden">
-      {/* Scan lines overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none z-30 opacity-20"
-        style={{
-          backgroundImage: `repeating-linear-gradient(
-            0deg,
-            transparent 0px,
-            transparent 2px,
-            rgba(0,0,0,0.3) 2px,
-            rgba(0,0,0,0.3) 4px
-          )`,
-        }}
-      />
-
-      {/* Red vignette */}
-      <div
-        className="absolute inset-0 pointer-events-none z-20"
-        style={{
-          background: 'radial-gradient(ellipse at center, transparent 40%, rgba(127,29,29,0.2) 100%)',
-        }}
-      />
-
-      {/* Corner timestamp */}
-      <div className="absolute top-3 left-3 z-40 font-mono text-[10px] text-white/50">
-        <div className="text-red-500 flex items-center gap-1">
-          <span className="animate-pulse">●</span> PROCESSING
-        </div>
-        <div>{timestamp}</div>
-        <div>DELIBERATION</div>
-      </div>
-
       {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
+        {/* Header */}
+        <h1 className="text-white font-bold tracking-widest uppercase text-lg sm:text-xl mb-8">
+          JUDGE IS DELIBERATING
+        </h1>
+
         {/* Scales animation */}
         <motion.div
-          className="text-amber-500 mb-8"
+          className="mb-8"
           animate={{
             rotate: [0, -5, 5, -5, 5, 0],
             scale: [1, 1.05, 1, 1.05, 1]
@@ -206,7 +147,7 @@ export default function DeliberationPage() {
           <svg viewBox="0 0 100 100" className="w-24 h-24 sm:w-32 sm:h-32">
             <motion.path
               d="M50 10 L50 70 M30 70 L70 70"
-              stroke="currentColor"
+              stroke="#dc2626"
               strokeWidth="4"
               fill="none"
               strokeLinecap="round"
@@ -215,11 +156,11 @@ export default function DeliberationPage() {
               cx="50"
               cy="10"
               r="6"
-              fill="currentColor"
+              fill="#dc2626"
             />
             <motion.path
               d="M20 35 L30 70 M80 35 L70 70"
-              stroke="currentColor"
+              stroke="#facc15"
               strokeWidth="3"
               fill="none"
               strokeLinecap="round"
@@ -241,7 +182,7 @@ export default function DeliberationPage() {
               cy="35"
               rx="15"
               ry="5"
-              fill="currentColor"
+              fill="#dc2626"
               opacity="0.8"
               animate={{ cy: [35, 40, 35] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -251,7 +192,7 @@ export default function DeliberationPage() {
               cy="35"
               rx="15"
               ry="5"
-              fill="currentColor"
+              fill="#facc15"
               opacity="0.8"
               animate={{ cy: [35, 30, 35] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
@@ -259,61 +200,38 @@ export default function DeliberationPage() {
           </svg>
         </motion.div>
 
-        {/* Status badge */}
+        {/* Status card */}
         <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="mb-4"
-        >
-          <div
-            className="px-6 py-2 border-2 border-amber-500"
-            style={{ background: 'rgba(0,0,0,0.8)' }}
-          >
-            <span className="text-sm font-black tracking-[0.2em] text-amber-400 font-mono">
-              DELIBERATING
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Status text */}
-        <motion.p
-          className="text-white/60 font-mono text-sm text-center mb-8"
-          key={status}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
+          className="bg-white/5 border border-white/10 p-6 rounded-sm w-full max-w-md mb-8"
         >
-          {status}
-        </motion.p>
+          <motion.p
+            className="text-white/80 font-mono text-sm text-center"
+            key={status}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {status}
+          </motion.p>
+        </motion.div>
 
         {/* Progress bar */}
-        <div className="w-64 h-2 bg-white/10 overflow-hidden">
-          <motion.div
-            className="h-full"
-            style={{
-              background: 'linear-gradient(90deg, #f59e0b, #dc2626)',
-            }}
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
-          />
-        </div>
-        <div className="text-white/40 text-[10px] font-mono mt-2">
-          {progress}% COMPLETE
-        </div>
-      </div>
-
-      {/* Bottom bar */}
-      <div className="relative h-8 overflow-hidden">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'repeating-linear-gradient(90deg, #dc2626 0px, #dc2626 20px, #000 20px, #000 40px)',
-          }}
-        />
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="bg-black px-4 text-amber-400/60 text-[10px] font-mono tracking-widest">
-            ANALYZING EVIDENCE
-          </span>
+        <div className="w-full max-w-md">
+          <div className="w-full h-2 bg-white/10 overflow-hidden">
+            <motion.div
+              className="h-full"
+              style={{
+                background: 'linear-gradient(90deg, #dc2626, #facc15)',
+              }}
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.3 }}
+            />
+          </div>
+          <div className="text-white/40 text-[10px] font-mono mt-2 text-center">
+            {progress}% COMPLETE
+          </div>
         </div>
       </div>
     </div>

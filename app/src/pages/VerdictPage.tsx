@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'motion/react'
+import { motion, AnimatePresence } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
 import { getShameData } from '../utils/shameTiers'
 
@@ -72,7 +72,8 @@ export default function VerdictPage() {
   const [shameLabel, setShameLabel] = useState<string>('')
   const [wrongPercent, setWrongPercent] = useState(0)
   const [showFullAnalysis, setShowFullAnalysis] = useState(false)
-  const [subjectId, setSubjectId] = useState('')
+  const [selectedTactic, setSelectedTactic] = useState<{ name: string; evidence: string; severity: string } | null>(null)
+  const [showToxicityBreakdown, setShowToxicityBreakdown] = useState(false)
 
   useEffect(() => {
     const verdictData = sessionStorage.getItem('verdict') || localStorage.getItem('verdict')
@@ -94,11 +95,6 @@ export default function VerdictPage() {
     setShameImage(shameData.image)
     setShameLabel(shameData.label)
 
-    // Generate subject ID for loser
-    const evidence = JSON.parse(sessionStorage.getItem('evidence') || localStorage.getItem('evidence') || '{}')
-    const loserName = parsedVerdict.winner === 'Party A' ? (evidence.partyB || 'Party B') : (evidence.partyA || 'Party A')
-    const randomId = Math.random().toString(36).substring(2, 8).toUpperCase()
-    setSubjectId(`${loserName.toUpperCase().replace(/\s+/g, '-')}-${randomId}`)
   }, [navigate])
 
   if (!verdict) return null
@@ -196,7 +192,7 @@ export default function VerdictPage() {
               <div className="text-center">
                 <div className="text-emerald-400 text-xs font-bold tracking-widest mb-1">CLEARED</div>
                 <div className="text-white text-2xl font-bold mb-1">{winnerName}</div>
-                <div className="text-emerald-400 text-base font-bold mb-2">{winnerCredibility}% Credibility</div>
+                <div className="text-emerald-400 text-base font-bold mb-2">{winnerCredibility}% RIGHT</div>
                 <p className="text-white/60 text-[11px] leading-relaxed">
                   {verdict.winner_reason.length > 60
                     ? verdict.winner_reason.substring(0, 60) + '...'
@@ -249,7 +245,6 @@ export default function VerdictPage() {
 
                 <div className="text-center">
                   <div className="text-white text-2xl font-bold mb-0">{loserName}</div>
-                  <div className="text-white/50 text-[10px] tracking-wider mb-2">SUBJECT ID: {subjectId}</div>
                   <div className="text-red-500 text-xl font-black mb-3">{wrongPercent}% WRONG</div>
 
                   {/* Meme image with EXHIBIT A label */}
@@ -341,9 +336,10 @@ export default function VerdictPage() {
             <h2 className="text-white/60 text-xs font-bold tracking-widest mb-3">TACTICS IDENTIFIED</h2>
             <div className="flex flex-wrap gap-2">
               {tacticNames.map((tactic, index) => (
-                <motion.span
+                <motion.button
                   key={index}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium"
+                  onClick={() => setSelectedTactic(verdict.manipulation_tactics[index])}
+                  className="px-3 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-white/5"
                   style={{
                     background: 'transparent',
                     border: '1px solid rgba(34, 197, 94, 0.6)',
@@ -354,7 +350,7 @@ export default function VerdictPage() {
                   transition={{ delay: 0.35 + index * 0.05 }}
                 >
                   {tactic}
-                </motion.span>
+                </motion.button>
               ))}
             </div>
           </motion.div>
@@ -372,7 +368,8 @@ export default function VerdictPage() {
               {verdict.evidence_log.slice(0, 3).map((item, index) => {
                 const formatted = formatEvidenceEntry(item)
                 return (
-                  <div key={index} className="text-sm leading-relaxed">
+                  <div key={index}
+                  onClick={() => setSelectedTactic(verdict.manipulation_tactics[index])} className="text-sm leading-relaxed">
                     <span className="text-white/40">[{String(index + 1).padStart(2, '0')}]</span>{' '}
                     <span className="text-white font-bold">{formatted.label}:</span>{' '}
                     {formatted.quote && (
@@ -429,6 +426,7 @@ export default function VerdictPage() {
                     {verdict.red_flags.map((flag, index) => (
                       <div
                         key={index}
+                  onClick={() => setSelectedTactic(verdict.manipulation_tactics[index])}
                         className="p-3 rounded-lg"
                         style={{ background: 'rgba(220, 38, 38, 0.1)', border: '1px solid rgba(220, 38, 38, 0.3)' }}
                       >
@@ -451,6 +449,7 @@ export default function VerdictPage() {
                     {verdict.manipulation_tactics.map((tactic, index) => (
                       <div
                         key={index}
+                  onClick={() => setSelectedTactic(verdict.manipulation_tactics[index])}
                         className="p-3 rounded-lg"
                         style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}
                       >
@@ -540,6 +539,112 @@ export default function VerdictPage() {
             <span className="text-red-400 font-bold tracking-wider text-sm">CASE CLOSED</span>
           </div>
         </motion.div>
+
+
+
+        {/* Tactic Detail Modal */}
+        <AnimatePresence>
+          {selectedTactic && (
+            <motion.div
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedTactic(null)}
+            >
+              <motion.div
+                className="bg-black border border-white/20 rounded-xl p-6 max-w-md w-full"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-bold text-lg">{selectedTactic.name}</h3>
+                  <span className={`text-xs px-2 py-1 rounded font-medium ${
+                    selectedTactic.severity === 'high'
+                      ? 'bg-red-500/20 text-red-400'
+                      : selectedTactic.severity === 'medium'
+                        ? 'bg-yellow-500/20 text-yellow-400'
+                        : 'bg-white/10 text-white/60'
+                  }`}>
+                    {selectedTactic.severity.toUpperCase()}
+                  </span>
+                </div>
+                <p className="text-white/60 text-sm mb-4">
+                  This manipulation tactic was identified in the conversation.
+                </p>
+                <div className="bg-white/5 rounded-lg p-4 mb-4">
+                  <div className="text-white/40 text-xs mb-2">EVIDENCE:</div>
+                  <p className="text-white/80 text-sm italic">"{selectedTactic.evidence}"</p>
+                </div>
+                <button
+                  onClick={() => setSelectedTactic(null)}
+                  className="w-full py-3 bg-white/10 rounded-lg text-white font-bold text-sm hover:bg-white/20 transition-colors"
+                >
+                  CLOSE
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Toxicity Breakdown Modal */}
+        <AnimatePresence>
+          {showToxicityBreakdown && (
+            <motion.div
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowToxicityBreakdown(false)}
+            >
+              <motion.div
+                className="bg-black border border-white/20 rounded-xl p-6 max-w-md w-full"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 className="text-white font-bold text-lg mb-4">Toxicity Breakdown</h3>
+                <div className="space-y-3 mb-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white/60 text-sm">Overall Toxicity</span>
+                    <span className="text-red-400 font-bold">{verdict.toxicity}%</span>
+                  </div>
+                  <div className="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 rounded-full"
+                      style={{ width: `${verdict.toxicity}%` }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 text-center text-xs text-white/40">
+                    <span>LOW</span>
+                    <span>MEDIUM</span>
+                    <span>HIGH</span>
+                  </div>
+                </div>
+                <div className="bg-white/5 rounded-lg p-4 mb-4">
+                  <div className="text-white/40 text-xs mb-2">CONTRIBUTING FACTORS:</div>
+                  <ul className="space-y-2">
+                    {verdict.manipulation_tactics.slice(0, 3).map((tactic, i) => (
+                      <li key={i} className="text-white/70 text-sm flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 bg-red-400 rounded-full" />
+                        {tactic.name}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <button
+                  onClick={() => setShowToxicityBreakdown(false)}
+                  className="w-full py-3 bg-white/10 rounded-lg text-white font-bold text-sm hover:bg-white/20 transition-colors"
+                >
+                  CLOSE
+                </button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
     </div>

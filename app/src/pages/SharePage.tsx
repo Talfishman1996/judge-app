@@ -184,7 +184,7 @@ export default function SharePage() {
 
       {/* Back button */}
       <button
-        onClick={() => navigate('/verdict/brutalist')}
+        onClick={() => navigate('/verdict')}
         className="absolute top-3 right-3 z-40 text-white/30 hover:text-white text-[10px] font-mono tracking-wider transition-colors"
       >
         [BACK]

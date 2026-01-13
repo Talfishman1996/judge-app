@@ -52,7 +52,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-judge-black flex flex-col p-4 sm:p-8">
+    <div className="min-h-screen bg-black flex flex-col p-4 sm:p-8">
       {/* Header */}
       <motion.div
         className="text-center mb-8"
@@ -60,7 +60,7 @@ export default function SettingsPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-judge-gold text-2xl sm:text-3xl font-bold tracking-widest">
+        <h1 className="text-white text-2xl sm:text-3xl font-bold tracking-widest uppercase">
           SETTINGS
         </h1>
       </motion.div>
@@ -73,9 +73,12 @@ export default function SettingsPage() {
         transition={{ delay: 0.2 }}
       >
         {/* API Key */}
-        <div className="bg-judge-white/5 p-4">
-          <div className="text-judge-gold font-bold tracking-wider mb-2">GEMINI API KEY</div>
-          <div className="text-judge-white/60 text-sm mb-3">
+        <div className="bg-white/5 border border-white/10 p-6 rounded-lg">
+          <div className="text-white/60 text-xs font-bold tracking-widest uppercase mb-3">
+            API CONFIGURATION
+          </div>
+          <div className="text-white font-bold tracking-wider mb-2">GEMINI API KEY</div>
+          <div className="text-white/60 text-sm mb-3">
             Get your free API key from{' '}
             <a
               href="https://aistudio.google.com/app/apikey"
@@ -92,61 +95,69 @@ export default function SettingsPage() {
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="Enter API key..."
-              className="flex-1 bg-judge-black border border-judge-white/20 text-judge-white px-4 py-2 text-sm focus:border-judge-gold focus:outline-none"
+              className="flex-1 bg-transparent border border-white/10 text-white px-4 py-2 text-sm focus:border-judge-gold focus:outline-none rounded"
             />
             <button
               onClick={saveApiKey}
-              className={`px-4 py-2 text-sm font-bold tracking-wider transition-all ${
+              className={`px-4 py-2 text-sm font-bold tracking-wider transition-all rounded ${
                 saved
                   ? 'bg-green-600 text-white'
-                  : 'bg-judge-gold text-judge-black hover:bg-judge-gold/80'
+                  : 'bg-judge-gold text-black hover:bg-judge-gold/80'
               }`}
             >
               {saved ? 'SAVED!' : 'SAVE'}
             </button>
           </div>
-          <div className="text-judge-white/40 text-xs mt-2">
+          <div className="text-white/40 text-xs mt-2">
             Your API key is stored locally and never sent to our servers.
           </div>
         </div>
 
         {/* Clear History */}
-        <div className="bg-judge-white/5 p-4 flex items-center justify-between">
-          <div>
-            <div className="text-judge-white font-bold tracking-wider">Clear Case History</div>
-            <div className="text-judge-white/60 text-sm">
-              {caseCount} case{caseCount !== 1 ? 's' : ''} on record
-            </div>
+        <div className="bg-white/5 border border-white/10 p-6 rounded-lg">
+          <div className="text-white/60 text-xs font-bold tracking-widest uppercase mb-3">
+            DATA MANAGEMENT
           </div>
-          <button
-            onClick={handleClearHistory}
-            disabled={caseCount === 0}
-            className={`border px-4 py-2 text-sm font-bold tracking-wider transition-all ${
-              caseCount === 0
-                ? 'border-judge-white/20 text-judge-white/40 cursor-not-allowed'
-                : 'border-judge-red text-judge-red hover:bg-judge-red hover:text-white'
-            }`}
-          >
-            CLEAR ALL
-          </button>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-white font-bold tracking-wider">Clear Case History</div>
+              <div className="text-white/60 text-sm">
+                {caseCount} case{caseCount !== 1 ? 's' : ''} on record
+              </div>
+            </div>
+            <button
+              onClick={handleClearHistory}
+              disabled={caseCount === 0}
+              className={`px-4 py-2 text-sm font-bold tracking-wider transition-all rounded ${
+                caseCount === 0
+                  ? 'bg-white/5 border border-white/10 text-white/40 cursor-not-allowed'
+                  : 'bg-red-600 text-white hover:bg-red-700'
+              }`}
+            >
+              CLEAR ALL
+            </button>
+          </div>
         </div>
 
         {/* About */}
-        <div className="bg-judge-white/5 p-4">
-          <div className="text-judge-gold font-bold tracking-wider mb-2">ABOUT JUDGE</div>
-          <p className="text-judge-white/60 text-sm leading-relaxed">
+        <div className="bg-white/5 border border-white/10 p-6 rounded-lg">
+          <div className="text-white/60 text-xs font-bold tracking-widest uppercase mb-3">
+            ABOUT
+          </div>
+          <div className="text-white font-bold tracking-wider mb-3">JUDGE</div>
+          <p className="text-white/60 text-sm leading-relaxed">
             JUDGE is an AI-powered courtroom that analyzes conversations and disputes
             to deliver honest, unbiased verdicts. Submit screenshots or text, and receive
             a detailed analysis including credibility scores, manipulation detection,
             and recommendations.
           </p>
-          <p className="text-judge-white/60 text-sm leading-relaxed mt-3">
+          <p className="text-white/60 text-sm leading-relaxed mt-3">
             Unlike other AI tools, JUDGE is designed to be <span className="text-judge-gold">brutally honest</span>.
             No sugarcoating. No validation seeking. Just the truth.
           </p>
-          <div className="mt-4 pt-4 border-t border-judge-white/10">
-            <p className="text-judge-white/40 text-xs">Version 1.0.0</p>
-            <p className="text-judge-white/40 text-xs">Powered by Gemini AI</p>
+          <div className="mt-4 pt-4 border-t border-white/10">
+            <p className="text-white/40 text-xs">Version 1.0.0</p>
+            <p className="text-white/40 text-xs">Powered by Gemini AI</p>
           </div>
         </div>
 
@@ -154,14 +165,14 @@ export default function SettingsPage() {
         <div className="flex gap-4 justify-center pt-4">
           <button
             onClick={() => navigate('/history')}
-            className="text-judge-white/60 hover:text-judge-white text-sm tracking-wider"
+            className="text-white/60 hover:text-white text-sm tracking-wider transition-colors"
           >
             View History
           </button>
-          <span className="text-judge-white/20">|</span>
+          <span className="text-white/20">|</span>
           <button
             onClick={() => navigate('/')}
-            className="text-judge-white/60 hover:text-judge-white text-sm tracking-wider"
+            className="text-white/60 hover:text-white text-sm tracking-wider transition-colors"
           >
             New Case
           </button>
