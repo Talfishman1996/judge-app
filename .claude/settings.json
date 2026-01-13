@@ -1,0 +1,8 @@
+{
+  "inheritGlobal": true,
+  "project": {
+    "name": "JUDGE App",
+    "mcpMemoryEntities": ["JUDGE_App", "Design_System", "User_Preferences"],
+    "description": "Courtroom-themed AI verdict app"
+  }
+}
