@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
+import { saveTempEvidence } from '../services/database'
 
 interface Exhibit {
   id: string
@@ -107,8 +108,7 @@ export default function UploadPage() {
         exhibits: exhibitData
       }
 
-      sessionStorage.setItem('evidence', JSON.stringify(evidencePayload))
-      localStorage.setItem('evidence', JSON.stringify(evidencePayload))
+      await saveTempEvidence(evidencePayload as any)
 
       navigate('/deliberation')
     } catch (err) {
@@ -315,10 +315,37 @@ export default function UploadPage() {
 }
 
 async function fileToBase64(file: File): Promise<string> {
+  // Compress image to reduce storage usage (iOS has strict quotas)
   return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(file)
+    const img = new Image()
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+
+    img.onload = () => {
+      // Max dimension 1200px to keep file size reasonable
+      const MAX_SIZE = 1200
+      let { width, height } = img
+
+      if (width > MAX_SIZE || height > MAX_SIZE) {
+        if (width > height) {
+          height = (height / width) * MAX_SIZE
+          width = MAX_SIZE
+        } else {
+          width = (width / height) * MAX_SIZE
+          height = MAX_SIZE
+        }
+      }
+
+      canvas.width = width
+      canvas.height = height
+      ctx?.drawImage(img, 0, 0, width, height)
+
+      // Use JPEG at 70% quality for much smaller files
+      const compressed = canvas.toDataURL('image/jpeg', 0.7)
+      resolve(compressed)
+    }
+
+    img.onerror = reject
+    img.src = URL.createObjectURL(file)
   })
 }

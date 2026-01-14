@@ -35,3 +35,5 @@ pdf-style.css
 screenshots/**/
 !screenshots/**/README.md
 .screenshots/
+.dev.vars
+.wrangler/

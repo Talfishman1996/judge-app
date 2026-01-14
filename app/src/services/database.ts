@@ -139,3 +139,56 @@ export async function getCaseCount(): Promise<number> {
     request.onerror = () => reject(request.error)
   })
 }
+
+// Temporary evidence storage (avoids localStorage quota issues on iOS)
+const TEMP_EVIDENCE_KEY = 'temp_evidence'
+
+export async function saveTempEvidence(evidence: Evidence): Promise<void> {
+  const database = await initDB()
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction([STORE_NAME], 'readwrite')
+    const store = transaction.objectStore(STORE_NAME)
+
+    const request = store.put({
+      id: TEMP_EVIDENCE_KEY,
+      timestamp: Date.now(),
+      evidence,
+      verdict: null,
+      partyAName: '',
+      partyBName: ''
+    })
+
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+  })
+}
+
+export async function getTempEvidence(): Promise<Evidence | null> {
+  const database = await initDB()
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction([STORE_NAME], 'readonly')
+    const store = transaction.objectStore(STORE_NAME)
+    const request = store.get(TEMP_EVIDENCE_KEY)
+
+    request.onsuccess = () => {
+      const result = request.result
+      resolve(result?.evidence || null)
+    }
+    request.onerror = () => reject(request.error)
+  })
+}
+
+export async function clearTempEvidence(): Promise<void> {
+  const database = await initDB()
+
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction([STORE_NAME], 'readwrite')
+    const store = transaction.objectStore(STORE_NAME)
+    const request = store.delete(TEMP_EVIDENCE_KEY)
+
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+  })
+}

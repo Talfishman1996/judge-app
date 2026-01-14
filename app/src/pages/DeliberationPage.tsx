@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { useNavigate } from 'react-router-dom'
 import { analyzeWithPrompt, type Evidence } from '../services/gemini'
-import { saveCase } from '../services/database'
+import { saveCase, getTempEvidence } from '../services/database'
 
 export default function DeliberationPage() {
   const navigate = useNavigate()
@@ -11,21 +11,28 @@ export default function DeliberationPage() {
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    // Check for evidence (sessionStorage first, localStorage as backup for iOS)
-    const evidenceStr = sessionStorage.getItem('evidence') || localStorage.getItem('evidence')
-    if (!evidenceStr) {
-      navigate('/')
-      return
-    }
+    const loadAndAnalyze = async () => {
+      let evidence: Evidence | null = null
 
-    // Call the real Gemini API
-    const analyzeCase = async () => {
-      let evidence: Evidence
       try {
-        evidence = JSON.parse(evidenceStr)
+        evidence = await getTempEvidence()
       } catch (e) {
-        console.error('Failed to parse evidence:', e)
-        setError('Failed to load evidence data')
+        console.error('Failed to get evidence from IndexedDB:', e)
+      }
+
+      if (!evidence) {
+        const evidenceStr = sessionStorage.getItem('evidence') || localStorage.getItem('evidence')
+        if (evidenceStr) {
+          try {
+            evidence = JSON.parse(evidenceStr)
+          } catch (e) {
+            console.error('Failed to parse evidence:', e)
+          }
+        }
+      }
+
+      if (!evidence) {
+        navigate('/')
         return
       }
 
@@ -51,16 +58,13 @@ export default function DeliberationPage() {
         setProgress(85)
         await delay(300)
 
-        // Save to IndexedDB
         try {
           await saveCase(evidence, verdict)
         } catch (dbError) {
           console.error('Failed to save case to history:', dbError)
         }
 
-        // Store verdict in session for display
         sessionStorage.setItem('verdict', JSON.stringify(verdict))
-        localStorage.setItem('verdict', JSON.stringify(verdict))
 
         setStatus('VERDICT READY')
         setProgress(100)
@@ -73,7 +77,7 @@ export default function DeliberationPage() {
       }
     }
 
-    analyzeCase()
+    loadAndAnalyze()
   }, [navigate])
 
   if (error) {
@@ -124,14 +128,11 @@ export default function DeliberationPage() {
 
   return (
     <div className="min-h-screen bg-black flex flex-col relative overflow-hidden">
-      {/* Main content */}
       <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10">
-        {/* Header */}
         <h1 className="text-white font-bold tracking-widest uppercase text-lg sm:text-xl mb-8">
           JUDGE IS DELIBERATING
         </h1>
 
-        {/* Scales animation */}
         <motion.div
           className="mb-8"
           animate={{
@@ -152,12 +153,7 @@ export default function DeliberationPage() {
               fill="none"
               strokeLinecap="round"
             />
-            <motion.circle
-              cx="50"
-              cy="10"
-              r="6"
-              fill="#dc2626"
-            />
+            <motion.circle cx="50" cy="10" r="6" fill="#dc2626" />
             <motion.path
               d="M20 35 L30 70 M80 35 L70 70"
               stroke="#facc15"
@@ -171,36 +167,19 @@ export default function DeliberationPage() {
                   "M20 35 L30 70 M80 35 L70 70"
                 ]
               }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             />
-            <motion.ellipse
-              cx="20"
-              cy="35"
-              rx="15"
-              ry="5"
-              fill="#dc2626"
-              opacity="0.8"
+            <motion.ellipse cx="20" cy="35" rx="15" ry="5" fill="#dc2626" opacity="0.8"
               animate={{ cy: [35, 40, 35] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             />
-            <motion.ellipse
-              cx="80"
-              cy="35"
-              rx="15"
-              ry="5"
-              fill="#facc15"
-              opacity="0.8"
+            <motion.ellipse cx="80" cy="35" rx="15" ry="5" fill="#facc15" opacity="0.8"
               animate={{ cy: [35, 30, 35] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             />
           </svg>
         </motion.div>
 
-        {/* Status card */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -216,14 +195,11 @@ export default function DeliberationPage() {
           </motion.p>
         </motion.div>
 
-        {/* Progress bar */}
         <div className="w-full max-w-md">
           <div className="w-full h-2 bg-white/10 overflow-hidden">
             <motion.div
               className="h-full"
-              style={{
-                background: 'linear-gradient(90deg, #dc2626, #facc15)',
-              }}
+              style={{ background: 'linear-gradient(90deg, #dc2626, #facc15)' }}
               initial={{ width: 0 }}
               animate={{ width: `${progress}%` }}
               transition={{ duration: 0.3 }}
