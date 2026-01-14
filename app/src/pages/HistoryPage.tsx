@@ -112,6 +112,10 @@ export default function HistoryPage() {
                      (party === 'B' && caseData.verdict.winner === 'Party B')
             }
 
+
+            // Get winner and loser names for display
+            const winnerName = caseData.verdict.winner === 'Party A' ? caseData.partyAName : caseData.partyBName
+            const loserName = caseData.verdict.winner === 'Party A' ? caseData.partyBName : caseData.partyAName
             return (
               <motion.div
                 key={caseData.id}
@@ -123,14 +127,40 @@ export default function HistoryPage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
-                    {/* Winner Badge */}
-                    {caseData.verdict.winner !== 'Draw' && (
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="bg-[#22c55e]/20 text-[#22c55e] text-xs font-bold px-2 py-1 tracking-widest uppercase">
-                          WINNER
-                        </span>
-                      </div>
-                    )}
+                    {/* Winner Preview with Verdict Indicator */}
+                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      {caseData.verdict.winner === 'Draw' ? (
+                        <>
+                          <span className="text-white/60">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 15h2v-2h-2v2zm0-4h2V7h-2v6z"/>
+                            </svg>
+                          </span>
+                          <span className="bg-white/10 text-white/70 text-xs font-bold px-2 py-1 tracking-widest uppercase">
+                            DRAW - NO WINNER
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-[#22c55e]">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                            </svg>
+                          </span>
+                          <span className="bg-[#22c55e]/20 text-[#22c55e] text-xs font-bold px-2 py-1 tracking-widest uppercase">
+                            {winnerName} WINS
+                          </span>
+                          <span className="text-[#dc2626] ml-1">
+                            <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+                            </svg>
+                          </span>
+                          <span className="bg-[#dc2626]/20 text-[#dc2626] text-xs font-bold px-2 py-1 tracking-widest uppercase">
+                            {loserName}
+                          </span>
+                        </>
+                      )}
+                    </div>
 
                     {/* Parties */}
                     <div className="flex items-center gap-3 mb-3">

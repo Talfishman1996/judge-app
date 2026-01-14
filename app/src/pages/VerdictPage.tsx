@@ -74,6 +74,20 @@ export default function VerdictPage() {
   const [showFullAnalysis, setShowFullAnalysis] = useState(false)
   const [selectedTactic, setSelectedTactic] = useState<{ name: string; evidence: string; severity: string } | null>(null)
   const [showToxicityBreakdown, setShowToxicityBreakdown] = useState(false)
+  const [showGavelStrike, setShowGavelStrike] = useState(false)
+
+  // Auto-scroll to top when verdict page loads
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
+  // Trigger gavel animation after a short delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowGavelStrike(true)
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     const verdictData = sessionStorage.getItem('verdict') || localStorage.getItem('verdict')
@@ -145,14 +159,31 @@ export default function VerdictPage() {
     <div className="min-h-screen bg-black p-4 pb-24">
       <div className="max-w-md mx-auto space-y-5">
 
-        {/* Header */}
+        {/* Header with Gavel Strike Animation */}
         <motion.div
           className="flex items-center justify-between py-2"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
         >
           <div className="w-6" /> {/* Spacer for centering */}
-          <h1 className="text-white text-lg font-bold tracking-widest">FINAL VERDICT</h1>
+          <div className="flex items-center gap-2">
+            <motion.div
+              className="text-yellow-400"
+              initial={{ rotate: -45, scale: 1.2 }}
+              animate={showGavelStrike ? {
+                rotate: [-45, 0, -10, 0],
+                scale: [1.2, 1, 1.1, 1]
+              } : {}}
+              transition={{
+                duration: 0.5,
+                times: [0, 0.4, 0.7, 1],
+                ease: "easeOut"
+              }}
+            >
+              <GavelIcon />
+            </motion.div>
+            <h1 className="text-white text-lg font-bold tracking-widest">FINAL VERDICT</h1>
+          </div>
           <button
             onClick={() => navigate('/settings')}
             className="text-white/60 hover:text-white transition-colors"
@@ -170,7 +201,7 @@ export default function VerdictPage() {
           <h2 className="text-white/60 text-xs font-bold tracking-widest mb-3">THE JUDGMENT</h2>
 
           <div className="grid grid-cols-2 gap-3">
-            {/* Winner Card - Green */}
+            {/* Winner Card - Green with bounce animation */}
             <motion.div
               className="rounded-xl p-4 relative overflow-hidden"
               style={{
@@ -178,8 +209,16 @@ export default function VerdictPage() {
                 border: '1px solid rgba(34, 197, 94, 0.4)'
               }}
               initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.15, type: "spring", stiffness: 200 }}
+              animate={showGavelStrike ? {
+                opacity: 1,
+                scale: [0.95, 1.05, 0.98, 1]
+              } : { opacity: 1, scale: 1 }}
+              transition={{
+                delay: 0.15,
+                duration: 0.6,
+                times: [0, 0.4, 0.7, 1],
+                ease: "easeOut"
+              }}
             >
               {/* Large green checkmark circle */}
               <div className="flex justify-center mb-3">
@@ -194,7 +233,7 @@ export default function VerdictPage() {
               </div>
             </motion.div>
 
-            {/* Loser Card - Red */}
+            {/* Loser Card - Red with bounce animation */}
             {loserName && (
               <motion.div
                 className="rounded-xl p-4 relative overflow-hidden"
@@ -203,8 +242,16 @@ export default function VerdictPage() {
                   border: '1px solid rgba(220, 38, 38, 0.5)'
                 }}
                 initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                animate={showGavelStrike ? {
+                  opacity: 1,
+                  scale: [0.95, 1.05, 0.98, 1]
+                } : { opacity: 1, scale: 1 }}
+                transition={{
+                  delay: 0.2,
+                  duration: 0.6,
+                  times: [0, 0.4, 0.7, 1],
+                  ease: "easeOut"
+                }}
               >
                 {/* Stamp-style shame badge */}
                 <div className="flex justify-center mb-2">

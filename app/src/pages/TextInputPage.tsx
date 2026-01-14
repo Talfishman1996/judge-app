@@ -170,8 +170,8 @@ export default function TextInputPage() {
             )}
 
             <div className="text-center">
-              <span className={`text-[10px] font-mono ${namedPeople.length >= 2 ? 'text-emerald-500' : 'text-white/30'}`}>
-                {namedPeople.length >= 2 ? 'MINIMUM 2 PARTIES MET' : `${2 - namedPeople.length} MORE NAME${2 - namedPeople.length !== 1 ? 'S' : ''} NEEDED`}
+              <span className={`text-[10px] font-mono ${namedPeople.length >= 2 ? 'text-emerald-500' : 'text-red-500'}`}>
+                {namedPeople.length >= 2 ? (<><span aria-hidden="true">&#10003;</span> MINIMUM 2 PARTIES MET</>) : (<><span aria-hidden="true">&#10007;</span> {2 - namedPeople.length} MORE NAME{2 - namedPeople.length !== 1 ? 'S' : ''} NEEDED</>)}
               </span>
             </div>
           </div>
@@ -199,7 +199,7 @@ export default function TextInputPage() {
             />
             <div className="flex justify-between items-center pt-2 border-t border-white/10">
               <span className={`text-[10px] font-mono ${conversation.length < 50 ? 'text-red-500' : 'text-emerald-500'}`}>
-                {conversation.length < 50 ? `${50 - conversation.length} MORE CHARS NEEDED` : 'MINIMUM MET'}
+                {conversation.length < 50 ? (<><span aria-hidden="true">&#10007;</span> {50 - conversation.length} MORE CHARS NEEDED</>) : (<><span aria-hidden="true">&#10003;</span> MINIMUM MET</>)}
               </span>
               <span className="text-white/30 text-[10px] font-mono">{conversation.length} CHARS</span>
             </div>
@@ -265,10 +265,10 @@ export default function TextInputPage() {
             transition={{ delay: 0.35 }}
           >
             {namedPeople.length < 2 && (
-              <p className="text-red-500/60 text-[10px] font-mono">NAME AT LEAST 2 PARTIES</p>
+              <p className="text-red-500/60 text-[10px] font-mono"><span aria-hidden="true">&#10007;</span> NAME AT LEAST 2 PARTIES</p>
             )}
             {conversation.length < 50 && (
-              <p className="text-red-500/60 text-[10px] font-mono">CONVERSATION TOO SHORT</p>
+              <p className="text-red-500/60 text-[10px] font-mono"><span aria-hidden="true">&#10007;</span> CONVERSATION TOO SHORT</p>
             )}
           </motion.div>
         )}

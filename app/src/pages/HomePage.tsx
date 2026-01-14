@@ -130,21 +130,6 @@ export default function HomePage() {
               </motion.button>
             ))}
           </motion.div>
-
-          {/* Secondary Actions */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: phase >= 2 ? 1 : 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-            className="flex flex-col items-center gap-4"
-          >
-            <button
-              onClick={() => navigate('/compare')}
-              className="text-white/60 hover:text-white text-xs font-bold tracking-widest uppercase transition-colors"
-            >
-              COMPARE VERDICTS
-            </button>
-          </motion.div>
         </div>
       </div>
 

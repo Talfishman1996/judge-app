@@ -19,6 +19,8 @@ export default function UploadPage() {
   const [timestamp, setTimestamp] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [party1Name, setParty1Name] = useState('')
+  const [party2Name, setParty2Name] = useState('')
 
   useEffect(() => {
     const updateTime = () => {
@@ -105,7 +107,11 @@ export default function UploadPage() {
 
       const evidencePayload = {
         type: 'screenshots',
-        exhibits: exhibitData
+        exhibits: exhibitData,
+        partyNames: {
+          party1: party1Name.trim() || 'Party 1',
+          party2: party2Name.trim() || 'Party 2'
+        }
       }
 
       await saveTempEvidence(evidencePayload as any)
@@ -172,6 +178,41 @@ export default function UploadPage() {
         <p className="text-white/40 text-xs font-mono tracking-wider">
           UPLOAD UP TO 10 SCREENSHOTS AS EXHIBITS
         </p>
+      </div>
+
+      {/* Party Names Section */}
+      <div className="px-4 pb-4">
+        <div className="border border-white/10 bg-white/5 p-4 rounded">
+          <p className="text-white/60 text-xs font-mono tracking-wider mb-3 text-center">
+            IDENTIFY THE PARTIES (OPTIONAL)
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-white/40 text-[10px] font-mono tracking-wider mb-1">
+                PARTY 1
+              </label>
+              <input
+                type="text"
+                value={party1Name}
+                onChange={(e) => setParty1Name(e.target.value)}
+                placeholder="e.g., John, Defendant..."
+                className="w-full bg-black border border-white/20 text-white px-3 py-2 text-sm font-mono placeholder:text-white/20 focus:border-red-500 focus:outline-none transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-white/40 text-[10px] font-mono tracking-wider mb-1">
+                PARTY 2
+              </label>
+              <input
+                type="text"
+                value={party2Name}
+                onChange={(e) => setParty2Name(e.target.value)}
+                placeholder="e.g., Jane, Plaintiff..."
+                className="w-full bg-black border border-white/20 text-white px-3 py-2 text-sm font-mono placeholder:text-white/20 focus:border-red-500 focus:outline-none transition-colors"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Drop Zone */}
